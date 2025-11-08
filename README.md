@@ -114,7 +114,7 @@ Team Vertexly — Product designers, developers, and visionaries
 
 🌐 Website: https://vertexly.vercel.app
 
-💼 GitHub: github.com/Nimish2110/vertexly
+💼 GitHub: github.com/YOUR_USERNAME/vertexly
 
 🪶 Closing Note
 
