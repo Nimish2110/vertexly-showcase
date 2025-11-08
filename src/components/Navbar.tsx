@@ -21,7 +21,7 @@ const Navbar = () => {
     { label: "Templates", href: "/templates" },
     { label: "About", href: "/about" },
     { label: "Blog", href: "/blog" },
-    { label: "Contact", href: "/contact" },
+    { label: "Elements", href: "/elements" },
   ];
 
   return (
