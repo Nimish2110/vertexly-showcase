@@ -39,7 +39,7 @@ const Navbar = () => {
             <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center transition-transform group-hover:scale-105">
               <BookOpen className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">Courses</span>
+            <span className="text-xl font-bold text-foreground">Vertexly</span>
           </Link>
 
           {/* Desktop Navigation */}
