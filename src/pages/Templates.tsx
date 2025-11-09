@@ -198,7 +198,7 @@ const Templates = () => {
           {/* Feature Cards */}
           <div className="grid md:grid-cols-3 gap-8 mt-20">
             {[
-              { title: "60+ UX Courses", icon: "📚" },
+              { title: "60+ UX Templates", icon: "🎨" },
               { title: "Expert Instructors", icon: "👨‍🏫" },
               { title: "Lifetime Access", icon: "♾️" },
             ].map((feature, index) => (
