@@ -36,7 +36,7 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#6a5ae0] via-[#b255f1] to-[#ff7fb1]">Vertexly</span>
+              <span className="text-xl font-bold">Vertexly</span>
             </Link>
             <p className="text-white/80 text-sm leading-relaxed">
               Professional website templates for startups, portfolios, and e-commerce.
