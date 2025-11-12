@@ -57,15 +57,19 @@ const Navbar = () => {
 
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Button
-              variant="outline"
-              className="border-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-            >
-              Log In
-            </Button>
-            <Button className="gradient-cta hover:opacity-90 transition-opacity duration-300 font-semibold uppercase text-sm">
-              Join
-            </Button>
+            <Link to="/login">
+              <Button
+                variant="outline"
+                className="border-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+              >
+                Log In
+              </Button>
+            </Link>
+            <Link to="/signup">
+              <Button className="gradient-cta hover:opacity-90 transition-opacity duration-300 font-semibold uppercase text-sm">
+                Join
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -96,10 +100,14 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="flex flex-col gap-3 pt-4">
-              <Button variant="outline" className="w-full">
-                Log In
-              </Button>
-              <Button className="w-full gradient-cta">Join</Button>
+              <Link to="/login" className="w-full">
+                <Button variant="outline" className="w-full">
+                  Log In
+                </Button>
+              </Link>
+              <Link to="/signup" className="w-full">
+                <Button className="w-full gradient-cta">Join</Button>
+              </Link>
             </div>
           </div>
         )}
