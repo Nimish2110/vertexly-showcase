@@ -100,7 +100,7 @@ const Footer = () => {
               {footerLinks.company.map((link) => (
                 <li key={link}>
                   <Link
-                    to="#"
+                    to={link === "Contact Us" ? "/contact" : "#"}
                     className="text-white/70 hover:text-white transition-colors duration-200 text-sm"
                   >
                     {link}
