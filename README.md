@@ -1,9 +1,9 @@
-🇮🇳 Vertexly — The Future of Website Creation in India
+## 🇮🇳 Vertexly — The Future of Website Creation in India
 💼 An Investor & Product Overview Document
 
 🌐 Live Demo: https://vertexly.vercel.app
 
-🚀 Introduction
+# 🚀 Introduction
 
 Vertexly is redefining how Indian businesses go online.
 Where AI website builders fail to deliver localized, affordable, and human-assisted solutions, Vertexly bridges the gap — offering customizable, ready-to-launch websites at a fraction of the cost.
@@ -11,35 +11,25 @@ Where AI website builders fail to deliver localized, affordable, and human-assis
 We don’t just build websites.
 💡 We build digital identities for India’s small businesses.
 
-⚠️ The Problem with AI Website Builders
-
-Modern AI website builders like Durable, Framer, and 10Web promise quick site creation,
-but they often fail for Indian businesses because of:
-
-⚔️ The Problem with AI Builders
+# ⚔️ The Problem with AI Builders
 
 ❌ Modern AI website builders like Durable, Framer, and 10Web promise “instant websites,” but deliver generic, low-quality results. They lack local language support, charge in dollars, and provide zero human guidance — leaving business owners frustrated with robotic designs that don’t connect with Indian customers. Most of them can’t even adapt to regional audiences or help users who aren’t tech-savvy.
 
-🚀 Why Vertexly Is Different
+# 🚀 Why Vertexly Is Different
 
 ✅ Vertexly changes the game with a human + tech hybrid approach. Every website is fully customizable, available in Hindi and English, and built with real human support via WhatsApp. Instead of paying monthly in USD, users pay a simple ₹500 one-time fee for a professional website delivered in just 48 hours. High quality, affordable, and locally focused — Vertexly builds identities, not just websites.
 
 AI is fast ⚡, but not personal.
 Vertexly merges automation + human touch 🤝 to build meaningful, accurate, and culturally relevant websites.
 
-💡 Why Vertexly is Different from Traditional Web Agencies
-
-Typical agencies charge ₹10,000–₹50,000 per website
-and take weeks to deliver — often without transparency or post-delivery support.
-
 Vertexly changes that 👇
 
-💼 Agency	💻 Vertexly
-Expensive (₹10k–₹50k)	Affordable (₹500–₹2,000)
-Weeks to deliver	48 Hours Delivery
-Complicated onboarding	3-step Simple Process
-No updates/support	Free WhatsApp Support
-Manual hosting	Auto-Hosted Websites
+  💼 Agency                    	💻 Vertexly
+Expensive (₹10k–₹50k)    |   	Affordable (₹500–₹2,000)
+Weeks to deliver	       |     48 Hours Delivery
+Complicated onboarding	 |     3-step Simple Process
+No updates/support	     |     Free WhatsApp Support
+Manual hosting	         |     Auto-Hosted Websites
 
 We make website creation as easy as ordering a meal online. 🍔
 
@@ -102,7 +92,7 @@ Phase 4 (2026)	AI-assisted template recommendations & auto-deployment
 Phase 5 (Beyond)	Partner with digital India & MSME programs
 👨‍💻 Team & Founders
 
-🧑‍💼 Nimish Nirmal — Founder & Lead Developer
+# 🧑‍💼 Nimish Nirmal —  Lead Developer
 
 "Building Vertexly isn’t just about websites — it’s about helping India go digital with ease, speed, and trust."
 
