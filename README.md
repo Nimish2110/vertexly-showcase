@@ -33,7 +33,7 @@ Manual hosting	         |     Auto-Hosted Websites
 
 We make website creation as easy as ordering a meal online. 🍔
 
-🧱 Vertexly Core Foundation
+** 🧱 Vertexly Core Foundation
 
 Vertexly is built on five powerful pillars that make it scalable, accessible, and future-ready:
 
@@ -50,7 +50,7 @@ Vertexly is built on five powerful pillars that make it scalable, accessible, an
 By 2026, Vertexly aims to become India’s largest small-business website platform,
 empowering 1 lakh+ businesses with easy, affordable, and humanized digital presence.
 
-🎯 Mission:
+** 🎯 Mission:
 To simplify website creation for Indian entrepreneurs — blending AI automation with real human assistance.
 
 📈 Financial Goals & Projections (2024–2026)
@@ -67,7 +67,7 @@ By the end of FY 2026, Vertexly targets:
 
 🤝 Partnerships with MSME-focused platforms for digital onboarding
 
-💼 Market Opportunity
+** 💼 Market Opportunity
 
 🌐 Over 63 million MSMEs in India still lack an active online presence.
 💬 Language & affordability barriers prevent small businesses from going digital.
@@ -77,7 +77,7 @@ By the end of FY 2026, Vertexly targets:
 
 ✨ Localized + Personalized + Affordable
 
-Benefit	Description
+** Benefit	Description
 💬 Language	Supports both Hindi & English for wider accessibility
 🪄 Templates	Modern, mobile-first, and customizable for all business niches
 🧾 Payments	Affordable one-time cost, no hidden subscriptions
@@ -105,7 +105,7 @@ Team Vertexly — Product designers, developers, and visionaries
 
 🌐 Website: https://vertexly.vercel.app
 
-💼 GitHub: github.com/YOUR_USERNAME/vertexly
+💼 GitHub: github.com/Nimish2110/vertexly
 
 🪶 Closing Note
 
