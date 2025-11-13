@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 interface PageHeaderProps {
   title: string;
   breadcrumb: string;
@@ -11,7 +13,10 @@ const PageHeader = ({ title, breadcrumb }: PageHeaderProps) => {
           {title}
         </h1>
         <p className="text-white/80 text-lg">
-          {breadcrumb}
+          <Link to="/" className="hover:text-white transition-colors">
+            Home
+          </Link>
+          {breadcrumb.replace("Home", "")}
         </p>
       </div>
     </header>
