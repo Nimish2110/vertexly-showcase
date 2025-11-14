@@ -18,9 +18,7 @@ const ContactUs = () => {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Form submitted:", formData);
+  const handleSubmit = () => {
     toast({
       title: "Message sent!",
       description: "We'll get back to you as soon as possible.",
@@ -131,10 +129,14 @@ const ContactUs = () => {
               <p className="text-center text-muted-foreground mb-8">
                 Fill out the form below and we'll get back to you shortly
               </p>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form action="https://formsubmit.co/vertexly.00@gmail.com" method="POST" onSubmit={handleSubmit} className="space-y-6">
+                <input type="hidden" name="_captcha" value="false" />
+                <input type="hidden" name="_template" value="box" />
+                <input type="hidden" name="_subject" value="New Contact From Vertexly Website!" />
                 <div>
                   <label className="text-sm font-medium mb-2 block">Full Name</label>
                   <Input
+                    name="name"
                     placeholder="Enter your name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -145,6 +147,7 @@ const ContactUs = () => {
                 <div>
                   <label className="text-sm font-medium mb-2 block">Email Address</label>
                   <Input
+                    name="email"
                     type="email"
                     placeholder="Enter your email"
                     value={formData.email}
@@ -156,6 +159,7 @@ const ContactUs = () => {
                 <div>
                   <label className="text-sm font-medium mb-2 block">Message</label>
                   <Textarea
+                    name="message"
                     placeholder="Tell us how we can help you..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
