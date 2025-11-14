@@ -18,12 +18,38 @@ const ContactUs = () => {
     message: "",
   });
 
-  const handleSubmit = () => {
-    toast({
-      title: "Message sent!",
-      description: "We'll get back to you as soon as possible.",
-    });
-    setFormData({ name: "", email: "", message: "" });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const formElement = e.target as HTMLFormElement;
+    const formDataObj = new FormData(formElement);
+
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        body: formDataObj,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({
+          title: "Thanks! Your message has been sent successfully.",
+          description: "We'll get back to you as soon as possible.",
+        });
+        setFormData({ name: "", email: "", message: "" });
+      } else {
+        toast({
+          title: "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const contactOptions = [
@@ -129,10 +155,9 @@ const ContactUs = () => {
               <p className="text-center text-muted-foreground mb-8">
                 Fill out the form below and we'll get back to you shortly
               </p>
-              <form action="https://formsubmit.co/vertexly.00@gmail.com" method="POST" onSubmit={handleSubmit} className="space-y-6">
-                <input type="hidden" name="_captcha" value="false" />
-                <input type="hidden" name="_template" value="box" />
-                <input type="hidden" name="_subject" value="New Contact From Vertexly Website!" />
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <input type="hidden" name="access_key" value="9ddfb1d7-29ad-4a2b-9524-bc5b07988c90" />
+                <input type="hidden" name="from_name" value="Vertexly Contact Form" />
                 <div>
                   <label className="text-sm font-medium mb-2 block">Full Name</label>
                   <Input
