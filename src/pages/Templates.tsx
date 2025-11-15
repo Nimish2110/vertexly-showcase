@@ -28,6 +28,7 @@ const allTemplates: Template[] = [
     description: "A modern, fully responsive e-commerce template with product showcases, shopping cart, and clean design perfect for online stores.",
     rating: 4.9,
     reviews: 312,
+    price: 5999,
     previewUrl: "/templates/zay/index.html",
     downloadUrl: "/templates/zay.zip",
     isRealTemplate: true,
@@ -40,6 +41,7 @@ const allTemplates: Template[] = [
     description: "Professional car service and automotive business template with service listings, contact forms, and stunning visual design.",
     rating: 4.8,
     reviews: 267,
+    price: 6999,
     previewUrl: "/templates/motora/index.html",
     downloadUrl: "/templates/motora.zip",
     isRealTemplate: true,
@@ -217,24 +219,37 @@ const Templates = () => {
                           </a>
                         </Button>
                       </div>
-                      <Button
-                        variant="secondary"
-                        className="w-full hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                      >
-                        <Rocket className="w-4 h-4 mr-2" />
-                        Use This Template
-                      </Button>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl font-bold text-foreground">
+                          ₹{template.price}
+                        </span>
+                        <Button
+                          variant="secondary"
+                          className="hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                        >
+                          <Rocket className="w-4 h-4 mr-2" />
+                          Use This Template
+                        </Button>
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between pt-4">
-                      <span className="text-2xl font-bold text-foreground">
-                        ${template.price}
-                      </span>
+                    <div className="space-y-2 pt-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl font-bold text-foreground">
+                          ${template.price}
+                        </span>
+                        <Button
+                          variant="default"
+                          className="transition-all duration-300"
+                        >
+                          Preview
+                        </Button>
+                      </div>
                       <Button
                         variant="outline"
-                        className="hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                        className="w-full hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                       >
-                        Find Out More
+                        Choose
                       </Button>
                     </div>
                   )}
