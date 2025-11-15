@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, Eye, Download, Rocket } from "lucide-react";
 
 interface Template {
   id: string;
@@ -11,38 +11,34 @@ interface Template {
   rating: number;
   reviews: number;
   price: number;
+  previewUrl: string;
+  downloadUrl: string;
 }
 
 const templates: Template[] = [
   {
-    id: "1",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&auto=format",
-    category: "User Experience",
-    title: "Fundamental of UX for Application design",
-    description: "The automated process all your website tasks. Discover tools and techniques to engage effectively.",
-    rating: 4.5,
-    reviews: 120,
-    price: 135,
+    id: "zay",
+    image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=500&auto=format",
+    category: "E-commerce",
+    title: "Zay Ecommerce",
+    description: "A modern, fully responsive e-commerce template with product showcases, shopping cart, and clean layouts.",
+    rating: 4.9,
+    reviews: 312,
+    price: 5999,
+    previewUrl: "/templates/zay/index.html",
+    downloadUrl: "/templates/zay.zip",
   },
   {
-    id: "2",
-    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500&auto=format",
-    category: "Web Development",
-    title: "Modern Web Development Essentials",
-    description: "Learn the latest web technologies and build stunning responsive websites from scratch.",
+    id: "motora",
+    image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=500&auto=format",
+    category: "Automotive",
+    title: "Motora Car Service",
+    description: "Professional car service and automotive business template with service listings, contact forms, and clean UI.",
     rating: 4.8,
-    reviews: 245,
-    price: 149,
-  },
-  {
-    id: "3",
-    image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=500&auto=format",
-    category: "Mobile Design",
-    title: "Mobile-First Design Principles",
-    description: "Master mobile-first design strategies and create exceptional mobile experiences.",
-    rating: 4.6,
-    reviews: 189,
-    price: 125,
+    reviews: 267,
+    price: 6999,
+    previewUrl: "/templates/motora/index.html",
+    downloadUrl: "/templates/motora.zip",
   },
 ];
 
@@ -116,42 +112,47 @@ const TemplatesShowcase = () => {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4">
-                    <span className="text-2xl font-bold text-foreground">
-                      ${template.price}
-                    </span>
-                    <Button
-                      variant="outline"
-                      className="hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                    >
-                      Find Out More
-                    </Button>
+                  <div className="space-y-2 pt-4">
+                    <div className="flex gap-2">
+                      <Button
+                        asChild
+                        variant="default"
+                        className="flex-1"
+                      >
+                        <a href={template.previewUrl} target="_blank" rel="noopener noreferrer">
+                          <Eye className="w-4 h-4 mr-2" />
+                          Preview
+                        </a>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        <a href={template.downloadUrl} download>
+                          <Download className="w-4 h-4 mr-2" />
+                          Download
+                        </a>
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-bold text-foreground">
+                        ₹{template.price}
+                      </span>
+                      <Button
+                        variant="secondary"
+                        className="hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                      >
+                        <Rocket className="w-4 h-4 mr-2" />
+                        Use Template
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="flex justify-center gap-4 mt-8">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handlePrev}
-              className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-              aria-label="Previous templates"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleNext}
-              className="rounded-full hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-              aria-label="Next templates"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </Button>
-          </div>
         </div>
       </div>
     </section>
