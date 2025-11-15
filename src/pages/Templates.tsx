@@ -2,7 +2,7 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Star, Puzzle } from "lucide-react";
+import { Star, Puzzle, Eye, Download, Rocket } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface Template {
@@ -13,10 +13,37 @@ interface Template {
   description: string;
   rating: number;
   reviews: number;
-  price: number;
+  price?: number;
+  previewUrl?: string;
+  downloadUrl?: string;
+  isRealTemplate?: boolean;
 }
 
 const allTemplates: Template[] = [
+  {
+    id: "zay",
+    image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=500&auto=format",
+    category: "E-commerce",
+    title: "Zay Ecommerce",
+    description: "A modern, fully responsive e-commerce template with product showcases, shopping cart, and clean design perfect for online stores.",
+    rating: 4.9,
+    reviews: 312,
+    previewUrl: "/templates/zay/index.html",
+    downloadUrl: "/templates/zay.zip",
+    isRealTemplate: true,
+  },
+  {
+    id: "motora",
+    image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=500&auto=format",
+    category: "Automotive",
+    title: "Motora Car Service",
+    description: "Professional car service and automotive business template with service listings, contact forms, and stunning visual design.",
+    rating: 4.8,
+    reviews: 267,
+    previewUrl: "/templates/motora/index.html",
+    downloadUrl: "/templates/motora.zip",
+    isRealTemplate: true,
+  },
   {
     id: "1",
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&auto=format",
@@ -166,17 +193,51 @@ const Templates = () => {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4">
-                    <span className="text-2xl font-bold text-foreground">
-                      ${template.price}
-                    </span>
-                    <Button
-                      variant="outline"
-                      className="hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                    >
-                      Find Out More
-                    </Button>
-                  </div>
+                  {template.isRealTemplate ? (
+                    <div className="space-y-2 pt-4">
+                      <div className="flex gap-2">
+                        <Button
+                          asChild
+                          variant="default"
+                          className="flex-1"
+                        >
+                          <a href={template.previewUrl} target="_blank" rel="noopener noreferrer">
+                            <Eye className="w-4 h-4 mr-2" />
+                            Preview
+                          </a>
+                        </Button>
+                        <Button
+                          asChild
+                          variant="outline"
+                          className="flex-1"
+                        >
+                          <a href={template.downloadUrl} download>
+                            <Download className="w-4 h-4 mr-2" />
+                            Download
+                          </a>
+                        </Button>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        className="w-full hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                      >
+                        <Rocket className="w-4 h-4 mr-2" />
+                        Use This Template
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between pt-4">
+                      <span className="text-2xl font-bold text-foreground">
+                        ${template.price}
+                      </span>
+                      <Button
+                        variant="outline"
+                        className="hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                      >
+                        Find Out More
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
