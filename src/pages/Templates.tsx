@@ -2,7 +2,7 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Star, Puzzle, Eye, Download, Rocket } from "lucide-react";
+import { Star, Puzzle, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface Template {
@@ -28,9 +28,9 @@ const allTemplates: Template[] = [
     description: "A modern, fully responsive e-commerce template with product showcases, shopping cart, and clean design perfect for online stores.",
     rating: 4.9,
     reviews: 312,
-    price: 5999,
+    price: 5000,
     previewUrl: "/templates/zay/index.html",
-    downloadUrl: "/templates/zay.zip",
+    downloadUrl: "",
     isRealTemplate: true,
   },
   {
@@ -41,81 +41,66 @@ const allTemplates: Template[] = [
     description: "Professional car service and automotive business template with service listings, contact forms, and stunning visual design.",
     rating: 4.8,
     reviews: 267,
-    price: 6999,
+    price: 6000,
     previewUrl: "/templates/motora/index.html",
-    downloadUrl: "/templates/motora.zip",
+    downloadUrl: "",
     isRealTemplate: true,
   },
   {
-    id: "1",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&auto=format",
-    category: "User Experience",
-    title: "Fundamental of UX for Application design",
-    description: "The automated process all your website tasks. Discover tools and techniques to engage effectively.",
-    rating: 4.5,
-    reviews: 120,
-    price: 135,
-  },
-  {
-    id: "2",
-    image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=500&auto=format",
-    category: "Web Development",
-    title: "Modern Web Development Essentials",
-    description: "Learn the latest web technologies and build stunning responsive websites from scratch.",
-    rating: 4.8,
-    reviews: 245,
-    price: 149,
-  },
-  {
-    id: "3",
-    image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=500&auto=format",
-    category: "Mobile Design",
-    title: "Mobile-First Design Principles",
-    description: "Master mobile-first design strategies and create exceptional mobile experiences.",
-    rating: 4.6,
-    reviews: 189,
-    price: 125,
-  },
-  {
-    id: "4",
-    image: "https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=500&auto=format",
-    category: "E-commerce",
-    title: "Complete E-commerce Solution",
-    description: "Build your online store with this comprehensive e-commerce template.",
+    id: "famms",
+    image: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=500&auto=format",
+    category: "Fashion & Retail",
+    title: "Famms Fashion Store",
+    description: "Stylish fashion e-commerce template with elegant product displays, testimonials, and modern design perfect for clothing stores.",
     rating: 4.7,
-    reviews: 156,
-    price: 159,
+    reviews: 189,
+    price: 6500,
+    previewUrl: "/templates/famms/index.html",
+    downloadUrl: "",
+    isRealTemplate: true,
   },
   {
-    id: "5",
-    image: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=500&auto=format",
-    category: "Portfolio",
-    title: "Creative Portfolio Showcase",
-    description: "Showcase your work beautifully with this modern portfolio template.",
+    id: "podtalk",
+    image: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=500&auto=format",
+    category: "Media & Podcast",
+    title: "Pod Talk Podcast",
+    description: "Modern podcast template with audio player integration, episode listings, and beautiful wave animations for content creators.",
+    rating: 4.8,
+    reviews: 234,
+    price: 7000,
+    previewUrl: "/templates/podtalk/index.html",
+    downloadUrl: "",
+    isRealTemplate: true,
+  },
+  {
+    id: "glossytouch",
+    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&auto=format",
+    category: "Creative Portfolio",
+    title: "Glossy Touch Portfolio",
+    description: "Eye-catching portfolio template with smooth animations, modern design, and perfect showcase for creative professionals.",
     rating: 4.9,
-    reviews: 203,
-    price: 119,
+    reviews: 276,
+    price: 7500,
+    previewUrl: "/templates/glossytouch/index.html",
+    downloadUrl: "",
+    isRealTemplate: true,
   },
   {
-    id: "6",
-    image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=500&auto=format",
-    category: "Business",
-    title: "Corporate Business Template",
-    description: "Professional business template perfect for agencies and consultancies.",
-    rating: 4.5,
-    reviews: 178,
-    price: 145,
+    id: "urotaxi",
+    image: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=500&auto=format",
+    category: "Transportation",
+    title: "UroTaxi Service",
+    description: "Professional taxi and transportation service template with booking features, service highlights, and clean modern interface.",
+    rating: 4.6,
+    reviews: 198,
+    price: 8000,
+    previewUrl: "/templates/urotaxi/index.html",
+    downloadUrl: "",
+    isRealTemplate: true,
   },
 ];
 
 const Templates = () => {
-  const [visibleCount, setVisibleCount] = useState(6);
-
-  const handleLoadMore = () => {
-    setVisibleCount((prev) => Math.min(prev + 6, allTemplates.length));
-  };
-
-  const visibleTemplates = allTemplates.slice(0, visibleCount);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -150,7 +135,7 @@ const Templates = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            {visibleTemplates.map((template, index) => (
+            {allTemplates.map((template, index) => (
               <div
                 key={template.id}
                 className="bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-elegant hover:-translate-y-2 transition-all duration-300 animate-fade-in group"
@@ -195,81 +180,27 @@ const Templates = () => {
                     </span>
                   </div>
 
-                  {template.isRealTemplate ? (
-                    <div className="space-y-2 pt-4">
-                      <div className="flex gap-2">
-                        <Button
-                          asChild
-                          variant="default"
-                          className="flex-1"
-                        >
-                          <a href={template.previewUrl} target="_blank" rel="noopener noreferrer">
-                            <Eye className="w-4 h-4 mr-2" />
-                            Preview
-                          </a>
-                        </Button>
-                        <Button
-                          asChild
-                          variant="outline"
-                          className="flex-1"
-                        >
-                          <a href={template.downloadUrl} download>
-                            <Download className="w-4 h-4 mr-2" />
-                            Download
-                          </a>
-                        </Button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-foreground">
-                          ₹{template.price}
-                        </span>
-                        <Button
-                          variant="secondary"
-                          className="hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                        >
-                          <Rocket className="w-4 h-4 mr-2" />
-                          Use This Template
-                        </Button>
-                      </div>
+                  <div className="space-y-3 pt-4">
+                    <Button
+                      asChild
+                      variant="default"
+                      className="w-full gradient-primary"
+                    >
+                      <a href={template.previewUrl} target="_blank" rel="noopener noreferrer">
+                        <Eye className="w-4 h-4 mr-2" />
+                        Preview Website
+                      </a>
+                    </Button>
+                    <div className="text-center">
+                      <span className="text-2xl font-bold text-foreground">
+                        ₹{template.price.toLocaleString()}
+                      </span>
                     </div>
-                  ) : (
-                    <div className="space-y-2 pt-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-foreground">
-                          ${template.price}
-                        </span>
-                        <Button
-                          variant="default"
-                          className="transition-all duration-300"
-                        >
-                          Preview
-                        </Button>
-                      </div>
-                      <Button
-                        variant="outline"
-                        className="w-full hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-                      >
-                        Choose
-                      </Button>
-                    </div>
-                  )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-
-          {visibleCount < allTemplates.length && (
-            <div className="text-center">
-              <Button
-                onClick={handleLoadMore}
-                variant="outline"
-                size="lg"
-                className="border-2 border-accent text-accent hover:bg-accent hover:text-white transition-all duration-300"
-              >
-                Load More
-              </Button>
-            </div>
-          )}
 
           {/* Feature Cards */}
           <div className="grid md:grid-cols-3 gap-8 mt-20">
