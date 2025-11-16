@@ -103,7 +103,7 @@ const allTemplates: Template[] = [
 const Templates = () => {
 
   return (
-    <div className="min-h-screen flex flex-col animate-slide-up">
+    <div className="min-h-screen flex flex-col">
       <Navbar />
 
       {/* Page Header */}
