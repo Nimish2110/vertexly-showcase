@@ -104,7 +104,7 @@ const TemplatesShowcase = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {templates.map((template, index) => (
+          {templates.slice(0, 3).map((template, index) => (
               <div
                 key={template.id}
                 className="bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-elegant hover:-translate-y-2 transition-all duration-300 animate-fade-in group"
