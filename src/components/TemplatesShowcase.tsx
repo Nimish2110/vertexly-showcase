@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Star, Eye } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface Template {
   id: string;
@@ -178,7 +179,7 @@ const TemplatesShowcase = () => {
             size="lg"
             className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
           >
-            <a href="/templates">View All Templates</a>
+            <Link to="/templates">View All Templates</Link>
           </Button>
         </div>
       </div>
