@@ -36,6 +36,8 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      {/* Elfsight AI Chatbot Widget */}
+      <div className="elfsight-app-7fbec029f1a44a04b759f34f79b706a7" data-elfsight-app-lazy></div>
     </TooltipProvider>
   </QueryClientProvider>
 );
