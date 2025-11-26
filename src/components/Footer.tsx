@@ -44,12 +44,14 @@ const Footer = () => {
             </p>
             <div className="flex gap-3">
               {[
-                { icon: Twitter, label: "Twitter" },
-                { icon: Facebook, label: "Facebook" },
-              ].map(({ icon: Icon, label }) => (
+                { icon: Twitter, label: "Twitter", url: "https://twitter.com/vertexly" },
+                { icon: Facebook, label: "Facebook", url: "https://facebook.com/vertexly" },
+              ].map(({ icon: Icon, label, url }) => (
                 <a
                   key={label}
-                  href="#"
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white hover:text-footer-bg transition-all duration-300 hover:scale-110"
                   aria-label={label}
                 >
@@ -65,12 +67,14 @@ const Footer = () => {
             <ul className="space-y-2">
               {footerLinks.templates.map((link) => (
                 <li key={link}>
-                  <Link
-                    to="#"
-                    className="text-white/70 hover:text-white transition-colors duration-200 text-sm"
+                  <a
+                    href="#"
+                    onClick={(e) => e.preventDefault()}
+                    aria-disabled="true"
+                    className="text-white/70 hover:text-white/70 transition-colors duration-200 text-sm cursor-not-allowed opacity-60"
                   >
                     {link}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -82,12 +86,14 @@ const Footer = () => {
             <ul className="space-y-2">
               {footerLinks.support.map((link) => (
                 <li key={link}>
-                  <Link
-                    to="#"
-                    className="text-white/70 hover:text-white transition-colors duration-200 text-sm"
+                  <a
+                    href="#"
+                    onClick={(e) => e.preventDefault()}
+                    aria-disabled="true"
+                    className="text-white/70 hover:text-white/70 transition-colors duration-200 text-sm cursor-not-allowed opacity-60"
                   >
                     {link}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -99,12 +105,23 @@ const Footer = () => {
             <ul className="space-y-2">
               {footerLinks.company.map((link) => (
                 <li key={link}>
-                  <Link
-                    to={link === "Contact Us" ? "/contact" : "#"}
-                    className="text-white/70 hover:text-white transition-colors duration-200 text-sm"
-                  >
-                    {link}
-                  </Link>
+                  {link === "Contact Us" ? (
+                    <Link
+                      to="/contact"
+                      className="text-white/70 hover:text-white transition-colors duration-200 text-sm"
+                    >
+                      {link}
+                    </Link>
+                  ) : (
+                    <a
+                      href="#"
+                      onClick={(e) => e.preventDefault()}
+                      aria-disabled="true"
+                      className="text-white/70 hover:text-white/70 transition-colors duration-200 text-sm cursor-not-allowed opacity-60"
+                    >
+                      {link}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
