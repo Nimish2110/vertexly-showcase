@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Menu, X } from "lucide-react";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -45,15 +46,33 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className="text-foreground hover:text-primary transition-colors duration-200 font-medium"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`relative font-medium transition-colors duration-200 ${
+                    isScrolled
+                      ? isActive
+                        ? "text-primary"
+                        : "text-foreground hover:text-primary"
+                      : isActive
+                      ? "text-white"
+                      : "text-white/90 hover:text-white"
+                  }`}
+                >
+                  {link.label}
+                  {isActive && (
+                    <span
+                      className={`absolute -bottom-1 left-0 right-0 h-0.5 transition-colors duration-300 ${
+                        isScrolled ? "bg-primary" : "bg-white"
+                      }`}
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Desktop Buttons */}
@@ -90,16 +109,27 @@ const Navbar = () => {
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden mt-4 pb-4 space-y-4 animate-fade-in">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                className="block text-foreground hover:text-primary transition-colors duration-200 font-medium py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`block font-medium py-2 transition-colors duration-200 ${
+                    isScrolled
+                      ? isActive
+                        ? "text-primary"
+                        : "text-foreground hover:text-primary"
+                      : isActive
+                      ? "text-white font-bold"
+                      : "text-white/90 hover:text-white"
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
             <div className="flex flex-col gap-3 pt-4">
               <Link to="/login" className="w-full">
                 <Button variant="outline" className="w-full">
