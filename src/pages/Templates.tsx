@@ -191,6 +191,15 @@ const Templates = () => {
                         Preview Website
                       </a>
                     </Button>
+                    <Button
+                      asChild
+                      variant="default"
+                      className="w-full gradient-primary"
+                    >
+                      <Link to={`/checkout/${template.id}`}>
+                        Checkout
+                      </Link>
+                    </Button>
                     <div className="text-center">
                       <span className="text-2xl font-bold text-foreground">
                         ₹{template.price.toLocaleString()}
