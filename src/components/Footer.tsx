@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BookOpen, Facebook, Twitter } from "lucide-react";
+import { BookOpen, Facebook, Instagram, Twitter } from "lucide-react";
 
 const Footer = () => {
   const footerLinks = {
@@ -46,6 +46,7 @@ const Footer = () => {
               {[
                 { icon: Twitter, label: "Twitter", url: "https://twitter.com/vertexly" },
                 { icon: Facebook, label: "Facebook", url: "https://facebook.com/vertexly" },
+                { icon: Instagram, label: "Instagram", url: "https://instagram.com/vertexly_" },
               ].map(({ icon: Icon, label, url }) => (
                 <a
                   key={label}
