@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Menu, X } from "lucide-react";
+import { BookOpen, Menu, X, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,19 +79,41 @@ const Navbar = () => {
 
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/login">
-              <Button
-                variant="outline"
-                className="border-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-              >
-                Log In
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button className="gradient-cta hover:opacity-90 transition-opacity duration-300 font-semibold uppercase text-sm">
-                Join
-              </Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link to="/profile">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={`rounded-full w-10 h-10 ${
+                    isScrolled
+                      ? "bg-primary/10 hover:bg-primary/20"
+                      : "bg-white/10 hover:bg-white/20"
+                  }`}
+                >
+                  <User
+                    className={`w-5 h-5 ${
+                      isScrolled ? "text-primary" : "text-white"
+                    }`}
+                  />
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button
+                    variant="outline"
+                    className="border-2 hover:bg-primary hover:text-primary-foreground transition-all duration-300"
+                  >
+                    Log In
+                  </Button>
+                </Link>
+                <Link to="/signup">
+                  <Button className="gradient-cta hover:opacity-90 transition-opacity duration-300 font-semibold uppercase text-sm">
+                    Join
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -131,14 +155,25 @@ const Navbar = () => {
               );
             })}
             <div className="flex flex-col gap-3 pt-4">
-              <Link to="/login" className="w-full">
-                <Button variant="outline" className="w-full">
-                  Log In
-                </Button>
-              </Link>
-              <Link to="/signup" className="w-full">
-                <Button className="w-full gradient-cta">Join</Button>
-              </Link>
+              {isLoggedIn ? (
+                <Link to="/profile" className="w-full" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button variant="outline" className="w-full">
+                    <User className="w-4 h-4 mr-2" />
+                    Profile
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link to="/login" className="w-full">
+                    <Button variant="outline" className="w-full">
+                      Log In
+                    </Button>
+                  </Link>
+                  <Link to="/signup" className="w-full">
+                    <Button className="w-full gradient-cta">Join</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { useState, FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import AuthHeader from "@/components/AuthHeader";
 import AuthButton from "@/components/AuthButton";
 import { Input } from "@/components/ui/input";
@@ -9,9 +10,12 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleGoogleLogin = () => {
-    console.log("Google Login Clicked");
+    login("user@google.com");
+    navigate("/");
   };
 
   const handleEmailSubmit = (e: FormEvent) => {
@@ -29,7 +33,8 @@ const Login = () => {
     }
 
     setError("");
-    console.log("Email submitted:", email);
+    login(email);
+    navigate("/");
   };
 
   return (
