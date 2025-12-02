@@ -1,5 +1,6 @@
 import { useState, FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import AuthHeader from "@/components/AuthHeader";
 import AuthButton from "@/components/AuthButton";
 import { Input } from "@/components/ui/input";
@@ -9,9 +10,12 @@ const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({ email: "", password: "" });
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleGoogleSignup = () => {
-    console.log("Google Signup Clicked");
+    login("user@google.com");
+    navigate("/");
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -37,7 +41,8 @@ const Signup = () => {
     setErrors(newErrors);
 
     if (!newErrors.email && !newErrors.password) {
-      console.log("Signup submitted:", { email, password });
+      login(email);
+      navigate("/");
     }
   };
 
