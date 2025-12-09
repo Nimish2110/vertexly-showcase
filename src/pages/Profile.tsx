@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Home } from "lucide-react";
 import { useAuth, Purchase } from "@/contexts/AuthContext";
 import AuthHeader from "@/components/AuthHeader";
 import AuthButton from "@/components/AuthButton";
@@ -271,8 +271,16 @@ const Profile = () => {
           </AuthButton>
         </div>
 
-        {/* Logout */}
-        <div className="text-center">
+        {/* Actions */}
+        <div className="flex justify-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => navigate("/")}
+            className="border-2 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+          >
+            <Home className="w-4 h-4 mr-2" />
+            Home
+          </Button>
           <Button
             variant="outline"
             onClick={handleLogout}
