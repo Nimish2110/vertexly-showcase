@@ -11,7 +11,7 @@ interface Purchase {
   price: number;
   requirements: string;
   selectedDate: string;
-  developerStatus: "pending" | "accepted" | "rejected";
+  developerStatus: "pending" | "requirements_submitted" | "accepted" | "rejected" | "in_progress" | "completed";
   paymentStatus: "pending" | "paid";
   deliveryStatus: "pending" | "delivered" | "cancelled";
   isCustom?: boolean;
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       price: 5000,
       requirements: "Need product filtering and cart functionality",
       selectedDate: "2024-01-15",
-      developerStatus: "accepted",
+      developerStatus: "completed",
       paymentStatus: "paid",
       deliveryStatus: "delivered",
     },
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       price: 6000,
       requirements: "Add booking system for car appointments",
       selectedDate: "2024-01-20",
-      developerStatus: "pending",
+      developerStatus: "accepted",
       paymentStatus: "pending",
       deliveryStatus: "pending",
     },
@@ -61,9 +61,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       price: 6500,
       requirements: "Include size charts and wishlist feature",
       selectedDate: "2024-01-22",
-      developerStatus: "rejected",
+      developerStatus: "requirements_submitted",
       paymentStatus: "pending",
-      deliveryStatus: "cancelled",
+      deliveryStatus: "pending",
+    },
+    {
+      id: "4",
+      templateName: "Pod Talk Podcast",
+      price: 7000,
+      requirements: "Audio player integration needed",
+      selectedDate: "2024-01-25",
+      developerStatus: "in_progress",
+      paymentStatus: "paid",
+      deliveryStatus: "pending",
     },
   ]);
 
