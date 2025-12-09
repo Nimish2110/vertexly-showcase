@@ -158,27 +158,36 @@ const Profile = () => {
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-foreground">
-                        ₹{purchase.price.toLocaleString()}
-                      </span>
                       {purchase.paymentStatus === "paid" ? (
                         <span className="text-green-600 font-medium text-sm">
-                          Paid
+                          ₹{purchase.price.toLocaleString()} – Paid
                         </span>
+                      ) : purchase.developerStatus === "accepted" ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-foreground">
+                            ₹{purchase.price.toLocaleString()}
+                          </span>
+                          <Button
+                            size="sm"
+                            disabled
+                            className="gradient-cta text-white text-xs h-7 opacity-60"
+                          >
+                            Pay Now
+                          </Button>
+                        </div>
                       ) : (
-                        <Button
-                          size="sm"
-                          disabled
-                          className="gradient-cta text-white text-xs h-7 opacity-60"
-                        >
-                          Pay Now
-                        </Button>
+                        <span className="text-muted-foreground text-sm">
+                          ₹{purchase.price.toLocaleString()}
+                        </span>
                       )}
                     </div>
                   </td>
                   <td className="py-4 px-4">
-                    <div className="flex justify-center">
+                    <div className="flex justify-center items-center gap-2">
                       <StatusIcon status={purchase.deliveryStatus} type="dot" />
+                      {purchase.developerStatus === "completed" && (
+                        <span className="text-green-600 text-xs font-medium">Completed</span>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -260,19 +269,6 @@ const Profile = () => {
           <AuthButton variant="primary" onClick={handleCustomSubmit}>
             Submit Request
           </AuthButton>
-        </div>
-
-        {/* Payment Placeholder */}
-        <div className="bg-card rounded-2xl shadow-elegant p-6 mb-8">
-          <h3 className="text-xl font-semibold text-foreground mb-4">
-            Payment (Coming Soon)
-          </h3>
-          <p className="text-muted-foreground mb-4">
-            Razorpay payment integration will be available soon.
-          </p>
-          <Button disabled className="gradient-cta text-white opacity-60">
-            Pay Now
-          </Button>
         </div>
 
         {/* Logout */}

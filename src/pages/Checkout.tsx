@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Template {
   id: string;
@@ -70,6 +71,7 @@ const templates: Record<string, Template> = {
 const Checkout = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const { toast } = useToast();
+  const { addPurchase } = useAuth();
   const [discountCode, setDiscountCode] = useState("");
   const [showRequirements, setShowRequirements] = useState(false);
   const [requirements, setRequirements] = useState("");
@@ -104,13 +106,22 @@ const Checkout = () => {
       return;
     }
 
-    // Mock function to save requirements
-    console.log("Requirements submitted:", requirements);
+    // Add purchase to AuthContext
+    addPurchase({
+      templateName: template!.title,
+      price: totalAmount,
+      requirements: requirements,
+      selectedDate: new Date().toISOString().split("T")[0],
+      developerStatus: "requirements_submitted",
+      paymentStatus: "pending",
+      deliveryStatus: "pending",
+    });
+
     setRequirementsSubmitted(true);
     
     toast({
       title: "Requirements Received",
-      description: "Your requirements have been received. Our developer will review them shortly.",
+      description: "Check your project status in your profile.",
     });
   };
 
@@ -228,8 +239,11 @@ const Checkout = () => {
               <div className="space-y-6">
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <p className="text-green-800 font-medium">
-                    Your requirements have been received. Our developer will review them shortly.
+                    Your requirements have been received. Check your project status in your profile.
                   </p>
+                  <Link to="/profile" className="text-primary hover:underline text-sm mt-2 inline-block">
+                    Go to Profile →
+                  </Link>
                 </div>
 
                 <Button
@@ -241,23 +255,6 @@ const Checkout = () => {
                 </Button>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Payment Section (Placeholder) */}
-        {requirementsSubmitted && (
-          <div className="bg-card rounded-2xl shadow-elegant p-8 animate-fade-in">
-            <h3 className="text-2xl font-bold text-foreground mb-4">Payment</h3>
-            <p className="text-muted-foreground mb-6">
-              Payment integration coming soon. You'll be able to complete your purchase using Razorpay.
-            </p>
-            <Button
-              disabled
-              className="w-full bg-muted text-muted-foreground cursor-not-allowed"
-              size="lg"
-            >
-              Pay Now (Coming Soon)
-            </Button>
           </div>
         )}
 
