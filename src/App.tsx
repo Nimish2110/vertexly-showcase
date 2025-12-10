@@ -17,6 +17,13 @@ import ContactUs from "./pages/ContactUs";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 
+// Admin Pages
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminOrderDetail from "./pages/admin/AdminOrderDetail";
+import AdminUsers from "./pages/admin/AdminUsers";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -38,6 +45,14 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/checkout/:templateId" element={<Checkout />} />
+            
+            {/* Admin Routes - Hidden from main navigation */}
+            <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/orders" element={<AdminOrders />} />
+            <Route path="/admin/orders/:orderId" element={<AdminOrderDetail />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
