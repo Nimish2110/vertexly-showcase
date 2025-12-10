@@ -3,6 +3,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
 interface User {
   name: string;
   email: string;
+  role: "user" | "admin";
 }
 
 interface Purchase {
@@ -18,15 +19,23 @@ interface Purchase {
   websiteType?: string;
   businessType?: string;
   deliveryTime?: string;
+  downloadLink?: string;
 }
+
+// Mock admin credentials (PROTOTYPE ONLY - NOT SECURE)
+const ADMIN_EMAIL = "admin@vertexly.com";
+const ADMIN_PASSWORD = "admin123";
 
 interface AuthContextType {
   isLoggedIn: boolean;
   user: User | null;
   purchases: Purchase[];
-  login: (email: string) => void;
+  login: (email: string, password?: string) => boolean;
   logout: () => void;
   addPurchase: (purchase: Omit<Purchase, "id">) => void;
+  isAdmin: () => boolean;
+  updateOrderStatus: (orderId: string, status: Purchase["developerStatus"]) => void;
+  updateOrderDownloadLink: (orderId: string, downloadLink: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -75,19 +84,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       paymentStatus: "paid",
       deliveryStatus: "pending",
     },
+    {
+      id: "5",
+      templateName: "Glossy Touch",
+      price: 7500,
+      requirements: "Modern animations and dark theme",
+      selectedDate: "2024-01-28",
+      developerStatus: "pending",
+      paymentStatus: "pending",
+      deliveryStatus: "pending",
+    },
   ]);
 
-  const login = (email: string) => {
+  const login = (email: string, password?: string): boolean => {
+    // Check for admin login
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      setIsLoggedIn(true);
+      setUser({
+        name: "Admin",
+        email: email,
+        role: "admin",
+      });
+      return true;
+    }
+    
+    // Regular user login
     setIsLoggedIn(true);
     setUser({
       name: "John Doe",
       email: email,
+      role: "user",
     });
+    return true;
   };
 
   const logout = () => {
     setIsLoggedIn(false);
     setUser(null);
+  };
+
+  const isAdmin = (): boolean => {
+    return user?.role === "admin";
   };
 
   const addPurchase = (purchase: Omit<Purchase, "id">) => {
@@ -98,8 +135,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setPurchases((prev) => [...prev, newPurchase]);
   };
 
+  const updateOrderStatus = (orderId: string, status: Purchase["developerStatus"]) => {
+    setPurchases((prev) =>
+      prev.map((p) =>
+        p.id === orderId
+          ? {
+              ...p,
+              developerStatus: status,
+              deliveryStatus: status === "completed" ? "delivered" : p.deliveryStatus,
+            }
+          : p
+      )
+    );
+  };
+
+  const updateOrderDownloadLink = (orderId: string, downloadLink: string) => {
+    setPurchases((prev) =>
+      prev.map((p) =>
+        p.id === orderId ? { ...p, downloadLink } : p
+      )
+    );
+  };
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, purchases, login, logout, addPurchase }}>
+    <AuthContext.Provider
+      value={{
+        isLoggedIn,
+        user,
+        purchases,
+        login,
+        logout,
+        addPurchase,
+        isAdmin,
+        updateOrderStatus,
+        updateOrderDownloadLink,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
