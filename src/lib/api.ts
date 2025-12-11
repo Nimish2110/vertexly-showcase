@@ -17,12 +17,10 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -34,22 +32,12 @@ api.interceptors.response.use(
   }
 );
 
-// Helper to save token
-export const saveToken = (token: string) => {
-  localStorage.setItem(TOKEN_KEY, token);
-};
+// Token helpers
+export const saveToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
+export const removeToken = () => localStorage.removeItem(TOKEN_KEY);
+export const getToken = () => localStorage.getItem(TOKEN_KEY);
 
-// Helper to remove token
-export const removeToken = () => {
-  localStorage.removeItem(TOKEN_KEY);
-};
-
-// Helper to get token
-export const getToken = () => {
-  return localStorage.getItem(TOKEN_KEY);
-};
-
-// ============ TYPES ============
+// ======================= TYPES =======================
 
 export interface User {
   _id: string;
@@ -67,34 +55,26 @@ export interface AuthResponse {
 
 export interface Template {
   _id: string;
-  id: string;
-  image: string;
-  category: string;
-  title: string;
-  description: string;
+  name: string;
   price: number;
-  previewUrl?: string;
-  rating?: number;
-  reviews?: number;
+  description?: string;
+  image?: string;
 }
 
 export interface Order {
   _id: string;
   user: User | string;
-  templateId?: string;
+  template: string | Template;
   templateName: string;
   price: number;
+  customizationPrice: number;
+  discount: number;
+  total: number;
+  status: string;
   requirements: string;
-  developerStatus: "pending" | "requirements_submitted" | "accepted" | "rejected" | "in_progress" | "completed";
-  paymentStatus: "pending" | "paid";
-  deliveryStatus: "pending" | "delivered" | "cancelled";
-  downloadLink?: string;
-  isCustom?: boolean;
-  websiteType?: string;
-  businessType?: string;
-  deliveryTime?: string;
+  requirementsSubmitted: boolean;
   createdAt: string;
-  updatedAt?: string;
+  updatedAt: string;
 }
 
 export interface ApiError {
@@ -102,8 +82,9 @@ export interface ApiError {
   errors?: Record<string, string>;
 }
 
-// ============ AUTH ROUTES ============
+// ======================= AUTH ROUTES =======================
 
+// REGISTER USER
 export const registerUser = async (
   name: string,
   email: string,
@@ -118,11 +99,11 @@ export const registerUser = async (
     saveToken(response.data.token);
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Registration failed";
-    return { error: message };
+    return { error: error.response?.data?.message || "Registration failed" };
   }
 };
 
+// LOGIN USER
 export const loginUser = async (
   email: string,
   password: string
@@ -135,66 +116,61 @@ export const loginUser = async (
     saveToken(response.data.token);
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Login failed";
-    return { error: message };
+    return { error: error.response?.data?.message || "Login failed" };
   }
 };
 
-// ============ USER ROUTES ============
+// ======================= USER ROUTES =======================
 
+// GET USER PROFILE
 export const getUserProfile = async (): Promise<{ data?: User; error?: string }> => {
   try {
     const response = await api.get<User>("/users/profile");
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to get profile";
-    return { error: message };
+    return { error: error.response?.data?.message || "Failed to fetch profile" };
   }
 };
 
-// ============ TEMPLATE ROUTES ============
+// ======================= TEMPLATE ROUTES =======================
 
+// GET ALL TEMPLATES
 export const getTemplates = async (): Promise<{ data?: Template[]; error?: string }> => {
   try {
     const response = await api.get<Template[]>("/templates");
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to get templates";
-    return { error: message };
+    return { error: error.response?.data?.message || "Failed to load templates" };
   }
 };
 
-// ============ ORDER ROUTES ============
+// ======================= ORDER ROUTES =======================
 
+// CREATE ORDER
 export const createOrder = async (orderData: {
-  templateId?: string;
-  templateName: string;
-  price: number;
-  requirements?: string;
-  isCustom?: boolean;
-  websiteType?: string;
-  businessType?: string;
-  deliveryTime?: string;
+  templateId: string;
+  customizationPrice?: number;
+  discount?: number;
 }): Promise<{ data?: Order; error?: string }> => {
   try {
-    const response = await api.post<Order>("/orders", orderData);
+    const response = await api.post<Order>("/orders/create", orderData);
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to create order";
-    return { error: message };
+    return { error: error.response?.data?.message || "Failed to create order" };
   }
 };
 
+// GET MY ORDERS
 export const getMyOrders = async (): Promise<{ data?: Order[]; error?: string }> => {
   try {
     const response = await api.get<Order[]>("/orders/my-orders");
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to get orders";
-    return { error: message };
+    return { error: error.response?.data?.message || "Failed to load orders" };
   }
 };
 
+// SUBMIT REQUIREMENTS
 export const submitRequirements = async (
   orderId: string,
   requirements: string
@@ -205,11 +181,11 @@ export const submitRequirements = async (
     });
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to submit requirements";
-    return { error: message };
+    return { error: error.response?.data?.message || "Failed to submit requirements" };
   }
 };
 
+// DOWNLOAD DELIVERY FILE
 export const downloadDelivery = async (
   orderId: string
 ): Promise<{ data?: Blob; error?: string }> => {
@@ -219,42 +195,37 @@ export const downloadDelivery = async (
     });
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to download delivery";
-    return { error: message };
+    return { error: error.response?.data?.message || "Download failed" };
   }
 };
 
-// ============ ADMIN ORDER ROUTES ============
+// ======================= ADMIN ORDER ROUTES =======================
 
-export const adminGetOrders = async (): Promise<{ data?: Order[]; error?: string }> => {
+// GET ALL ORDERS (ADMIN)
+export const adminGetOrders = async () => {
   try {
     const response = await api.get<Order[]>("/admin/orders");
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to get orders";
-    return { error: message };
+    return { error: error.response?.data?.message };
   }
 };
 
-export const adminUpdateOrderStatus = async (
-  orderId: string,
-  status: Order["developerStatus"]
-): Promise<{ data?: Order; error?: string }> => {
+// UPDATE ORDER STATUS (ADMIN)
+export const adminUpdateOrderStatus = async (orderId: string, status: string) => {
   try {
-    const response = await api.patch<Order>(`/admin/orders/${orderId}/status`, {
-      status,
-    });
+    const response = await api.patch<Order>(
+      `/admin/orders/${orderId}/status`,
+      { status }
+    );
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to update order status";
-    return { error: message };
+    return { error: error.response?.data?.message };
   }
 };
 
-export const adminUploadDelivery = async (
-  orderId: string,
-  file: File
-): Promise<{ data?: Order; error?: string }> => {
+// UPLOAD DELIVERY FILE (ADMIN)
+export const adminUploadDelivery = async (orderId: string, file: File) => {
   try {
     const formData = new FormData();
     formData.append("file", file);
@@ -263,76 +234,59 @@ export const adminUploadDelivery = async (
       `/admin/orders/${orderId}/delivery`,
       formData,
       {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       }
     );
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to upload delivery";
-    return { error: message };
+    return { error: error.response?.data?.message };
   }
 };
 
-// ============ ADMIN USER ROUTES ============
+// ======================= ADMIN USER ROUTES =======================
 
-export const adminGetUsers = async (): Promise<{ data?: User[]; error?: string }> => {
+export const adminGetUsers = async () => {
   try {
     const response = await api.get<User[]>("/admin/users");
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to get users";
-    return { error: message };
+    return { error: error.response?.data?.message };
   }
 };
 
-export const adminGetUser = async (
-  userId: string
-): Promise<{ data?: User; error?: string }> => {
+export const adminGetUser = async (userId: string) => {
   try {
     const response = await api.get<User>(`/admin/users/${userId}`);
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to get user";
-    return { error: message };
+    return { error: error.response?.data?.message };
   }
 };
 
-export const adminUpdateUser = async (
-  userId: string,
-  userData: Partial<User>
-): Promise<{ data?: User; error?: string }> => {
+export const adminUpdateUser = async (userId: string, userData: Partial<User>) => {
   try {
     const response = await api.put<User>(`/admin/users/${userId}`, userData);
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to update user";
-    return { error: message };
+    return { error: error.response?.data?.message };
   }
 };
 
-export const adminDeleteUser = async (
-  userId: string
-): Promise<{ data?: { message: string }; error?: string }> => {
+export const adminDeleteUser = async (userId: string) => {
   try {
     const response = await api.delete<{ message: string }>(`/admin/users/${userId}`);
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to delete user";
-    return { error: message };
+    return { error: error.response?.data?.message };
   }
 };
 
-export const adminRestoreUser = async (
-  userId: string
-): Promise<{ data?: User; error?: string }> => {
+export const adminRestoreUser = async (userId: string) => {
   try {
     const response = await api.patch<User>(`/admin/users/${userId}/restore`);
     return { data: response.data };
   } catch (error: any) {
-    const message = error.response?.data?.message || "Failed to restore user";
-    return { error: message };
+    return { error: error.response?.data?.message };
   }
 };
 
