@@ -59,6 +59,8 @@ export const getTemplates = async () => {
 export const createOrder = async (orderData: any) => {
   try {
     const res = await api.post("/orders/create", orderData);
+
+    // Return WHOLE response (message + order)
     return { data: res.data };
   } catch (err: any) {
     return { error: err.response?.data?.message || "Order creation failed" };
