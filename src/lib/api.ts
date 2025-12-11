@@ -89,9 +89,9 @@ export const getMyOrders = async () => {
 
 export const submitRequirements = async (orderId: string, requirements: string) => {
   try {
-    const res = await api.post(`/orders/requirements/${orderId}`, { requirements });
+    const res = await api.put(`/orders/${orderId}/requirements`, { requirements });
     return { data: res.data };
-  } catch {
+  } catch (err) {
     return { error: "Failed to submit requirements" };
   }
 };
