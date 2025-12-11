@@ -121,7 +121,7 @@ const Checkout = () => {
     });
 
     if (data && !error) {
-  console.log("ORDER CREATED → ", data);
+  console.log("ORDER RESPONSE → ", data);
   setOrderId(data.order._id); // <-- IMPORTANT
   setShowRequirements(true);
 } else {
