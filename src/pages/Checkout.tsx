@@ -157,13 +157,16 @@ const Checkout = () => {
     
     const { data, error } = await submitRequirements(orderId, requirements);
 
-    if (data && !error) {
-      setRequirementsSubmitted(true);
-      toast({
-        title: "Requirements Received",
-        description: "Check your project status in your profile.",
-      });
-    } else {
+    if (data) {
+  console.log("REQUIREMENTS SUBMITTED RESPONSE →", data);
+
+  setRequirementsSubmitted(true);
+
+  toast({
+    title: "Requirements Submitted",
+    description: "Your requirements were saved successfully!",
+  });
+} else {
       toast({
         title: "Error",
         description: error || "Failed to submit requirements",
