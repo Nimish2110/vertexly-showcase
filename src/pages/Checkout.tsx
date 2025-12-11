@@ -115,10 +115,10 @@ const Checkout = () => {
     
     // Create the order first
     const { data, error } = await createOrder({
-      templateId: template.id,
-      templateName: template.title,
-      price: totalAmount,
-    });
+  templateId: template.id,
+  customizationPrice: 500, // your fixed customization charge
+  discount: discount,      // calculated discount
+});
 
     if (data && !error) {
   console.log("ORDER RESPONSE → ", data);
