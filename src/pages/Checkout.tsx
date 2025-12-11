@@ -116,24 +116,22 @@ const Checkout = () => {
     // Create the order first
     const { data, error } = await createOrder({
   templateId: template.id,
-  customizationPrice: 500, // your fixed customization charge
-  discount: discount,      // calculated discount
+  customizationPrice: 500,
+  discount: discount,
 });
 
-    if (data && !error) {
-  console.log("ORDER RESPONSE → ", data);
+console.log("RAW ORDER RESPONSE →", data);
+
+if (data && data.order) {
   setOrderId(data.order._id);
-console.log("SET ORDER ID =", data.order._id);
   setShowRequirements(true);
 } else {
-      toast({
-        title: "Error",
-        description: error || "Failed to create order",
-        variant: "destructive",
-      });
-    }
-    setIsSubmitting(false);
-  };
+  toast({
+    title: "Error",
+    description: error || "Failed to create order",
+    variant: "destructive",
+  });
+}
 
   const handleRequirementsSubmit = async () => {
     if (!requirements.trim()) {
