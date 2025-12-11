@@ -115,7 +115,7 @@ const Checkout = () => {
     
     // Create the order first
     const { data, error } = await createOrder({
-      templateId: template._id,
+      templateId: template.id,
       templateName: template.title,
       price: totalAmount,
     });
