@@ -1,41 +1,24 @@
-import { createContext, useContext, useState, ReactNode } from "react";
-
-interface User {
-  name: string;
-  email: string;
-  role: "user" | "admin";
-}
-
-interface Purchase {
-  id: string;
-  templateName: string;
-  price: number;
-  requirements: string;
-  selectedDate: string;
-  developerStatus: "pending" | "requirements_submitted" | "accepted" | "rejected" | "in_progress" | "completed";
-  paymentStatus: "pending" | "paid";
-  deliveryStatus: "pending" | "delivered" | "cancelled";
-  isCustom?: boolean;
-  websiteType?: string;
-  businessType?: string;
-  deliveryTime?: string;
-  downloadLink?: string;
-}
-
-// Mock admin credentials (PROTOTYPE ONLY - NOT SECURE)
-const ADMIN_EMAIL = "admin@vertexly.com";
-const ADMIN_PASSWORD = "admin123";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { 
+  User, 
+  Order, 
+  loginUser, 
+  registerUser, 
+  getUserProfile, 
+  getToken, 
+  removeToken,
+  getMyOrders as fetchMyOrders
+} from "@/lib/api";
 
 interface AuthContextType {
   isLoggedIn: boolean;
   user: User | null;
-  purchases: Purchase[];
-  login: (email: string, password?: string) => boolean;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  addPurchase: (purchase: Omit<Purchase, "id">) => void;
   isAdmin: () => boolean;
-  updateOrderStatus: (orderId: string, status: Purchase["developerStatus"]) => void;
-  updateOrderDownloadLink: (orderId: string, downloadLink: string) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,82 +26,48 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [purchases, setPurchases] = useState<Purchase[]>([
-    {
-      id: "1",
-      templateName: "Zay Ecommerce",
-      price: 5000,
-      requirements: "Need product filtering and cart functionality",
-      selectedDate: "2024-01-15",
-      developerStatus: "completed",
-      paymentStatus: "paid",
-      deliveryStatus: "delivered",
-    },
-    {
-      id: "2",
-      templateName: "Motora Car Service",
-      price: 6000,
-      requirements: "Add booking system for car appointments",
-      selectedDate: "2024-01-20",
-      developerStatus: "accepted",
-      paymentStatus: "pending",
-      deliveryStatus: "pending",
-    },
-    {
-      id: "3",
-      templateName: "Famms Fashion Store",
-      price: 6500,
-      requirements: "Include size charts and wishlist feature",
-      selectedDate: "2024-01-22",
-      developerStatus: "requirements_submitted",
-      paymentStatus: "pending",
-      deliveryStatus: "pending",
-    },
-    {
-      id: "4",
-      templateName: "Pod Talk Podcast",
-      price: 7000,
-      requirements: "Audio player integration needed",
-      selectedDate: "2024-01-25",
-      developerStatus: "in_progress",
-      paymentStatus: "paid",
-      deliveryStatus: "pending",
-    },
-    {
-      id: "5",
-      templateName: "Glossy Touch",
-      price: 7500,
-      requirements: "Modern animations and dark theme",
-      selectedDate: "2024-01-28",
-      developerStatus: "pending",
-      paymentStatus: "pending",
-      deliveryStatus: "pending",
-    },
-  ]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (email: string, password?: string): boolean => {
-    // Check for admin login
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+  // Check for existing token on mount
+  useEffect(() => {
+    const initAuth = async () => {
+      const token = getToken();
+      if (token) {
+        const { data, error } = await getUserProfile();
+        if (data && !error) {
+          setUser(data);
+          setIsLoggedIn(true);
+        } else {
+          removeToken();
+        }
+      }
+      setIsLoading(false);
+    };
+    initAuth();
+  }, []);
+
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const { data, error } = await loginUser(email, password);
+    if (data && !error) {
+      setUser(data.user);
       setIsLoggedIn(true);
-      setUser({
-        name: "Admin",
-        email: email,
-        role: "admin",
-      });
-      return true;
+      return { success: true };
     }
-    
-    // Regular user login
-    setIsLoggedIn(true);
-    setUser({
-      name: "John Doe",
-      email: email,
-      role: "user",
-    });
-    return true;
+    return { success: false, error };
+  };
+
+  const register = async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const { data, error } = await registerUser(name, email, password);
+    if (data && !error) {
+      setUser(data.user);
+      setIsLoggedIn(true);
+      return { success: true };
+    }
+    return { success: false, error };
   };
 
   const logout = () => {
+    removeToken();
     setIsLoggedIn(false);
     setUser(null);
   };
@@ -127,34 +76,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return user?.role === "admin";
   };
 
-  const addPurchase = (purchase: Omit<Purchase, "id">) => {
-    const newPurchase: Purchase = {
-      ...purchase,
-      id: Date.now().toString(),
-    };
-    setPurchases((prev) => [...prev, newPurchase]);
-  };
-
-  const updateOrderStatus = (orderId: string, status: Purchase["developerStatus"]) => {
-    setPurchases((prev) =>
-      prev.map((p) =>
-        p.id === orderId
-          ? {
-              ...p,
-              developerStatus: status,
-              deliveryStatus: status === "completed" ? "delivered" : p.deliveryStatus,
-            }
-          : p
-      )
-    );
-  };
-
-  const updateOrderDownloadLink = (orderId: string, downloadLink: string) => {
-    setPurchases((prev) =>
-      prev.map((p) =>
-        p.id === orderId ? { ...p, downloadLink } : p
-      )
-    );
+  const refreshUser = async () => {
+    const { data } = await getUserProfile();
+    if (data) {
+      setUser(data);
+    }
   };
 
   return (
@@ -162,13 +88,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         isLoggedIn,
         user,
-        purchases,
+        isLoading,
         login,
+        register,
         logout,
-        addPurchase,
         isAdmin,
-        updateOrderStatus,
-        updateOrderDownloadLink,
+        refreshUser,
       }}
     >
       {children}
@@ -184,4 +109,4 @@ export const useAuth = () => {
   return context;
 };
 
-export type { Purchase };
+export type { User, Order };

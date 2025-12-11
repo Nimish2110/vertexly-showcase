@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth, Purchase } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { adminGetOrders, adminUpdateOrderStatus, Order } from "@/lib/api";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,20 +24,45 @@ import { toast } from "sonner";
 
 const AdminOrders = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, isAdmin, purchases, updateOrderStatus } = useAuth();
+  const { isLoggedIn, isAdmin, isLoading: authLoading } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoggedIn || !isAdmin()) {
-      navigate("/");
+    if (!authLoading && (!isLoggedIn || !isAdmin())) {
+      navigate("/admin");
     }
-  }, [isLoggedIn, isAdmin, navigate]);
+  }, [isLoggedIn, isAdmin, authLoading, navigate]);
 
-  const handleStatusChange = (orderId: string, status: Purchase["developerStatus"]) => {
-    updateOrderStatus(orderId, status);
-    toast.success(`Order status updated to ${status.replace("_", " ")}`);
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!isLoggedIn || !isAdmin()) return;
+      
+      setIsLoading(true);
+      const { data, error } = await adminGetOrders();
+      if (data && !error) {
+        setOrders(data);
+      } else if (error) {
+        toast.error(error);
+      }
+      setIsLoading(false);
+    };
+    fetchOrders();
+  }, [isLoggedIn, isAdmin]);
+
+  const handleStatusChange = async (orderId: string, status: Order["developerStatus"]) => {
+    const { data, error } = await adminUpdateOrderStatus(orderId, status);
+    if (data && !error) {
+      setOrders((prev) =>
+        prev.map((o) => (o._id === orderId ? { ...o, developerStatus: status } : o))
+      );
+      toast.success(`Order status updated to ${status.replace("_", " ")}`);
+    } else {
+      toast.error(error || "Failed to update status");
+    }
   };
 
-  const getStatusBadge = (status: Purchase["developerStatus"]) => {
+  const getStatusBadge = (status: Order["developerStatus"]) => {
     const styles = {
       pending: "bg-yellow-500/10 text-yellow-500",
       requirements_submitted: "bg-orange-500/10 text-orange-500",
@@ -52,6 +78,16 @@ const AdminOrders = () => {
       </span>
     );
   };
+
+  if (authLoading || isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -72,6 +108,7 @@ const AdminOrders = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Order ID</TableHead>
+                  <TableHead>User</TableHead>
                   <TableHead>Template</TableHead>
                   <TableHead>Requirements</TableHead>
                   <TableHead>Date</TableHead>
@@ -82,76 +119,98 @@ const AdminOrders = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {purchases.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-mono text-sm">#{order.id}</TableCell>
-                    <TableCell className="font-medium">{order.templateName}</TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                      {order.requirements}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(order.selectedDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>₹{order.price}</TableCell>
-                    <TableCell>{getStatusBadge(order.developerStatus)}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          order.paymentStatus === "paid"
-                            ? "bg-green-500/10 text-green-500"
-                            : "bg-yellow-500/10 text-yellow-500"
-                        }`}
-                      >
-                        {order.paymentStatus}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link to={`/admin/orders/${order.id}`} className="flex items-center gap-2">
-                              <Eye className="w-4 h-4" />
-                              View Details
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleStatusChange(order.id, "accepted")}
-                            className="flex items-center gap-2 text-green-500"
-                          >
-                            <Check className="w-4 h-4" />
-                            Accept
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleStatusChange(order.id, "rejected")}
-                            className="flex items-center gap-2 text-red-500"
-                          >
-                            <X className="w-4 h-4" />
-                            Reject
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleStatusChange(order.id, "in_progress")}
-                            className="flex items-center gap-2 text-blue-500"
-                          >
-                            <Loader2 className="w-4 h-4" />
-                            Mark In Progress
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleStatusChange(order.id, "completed")}
-                            className="flex items-center gap-2 text-green-500"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            Mark Completed
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {orders.map((order) => {
+                  const user = typeof order.user === "object" ? order.user : null;
+                  return (
+                    <TableRow key={order._id}>
+                      <TableCell className="font-mono text-sm">
+                        #{order._id.slice(-6)}
+                      </TableCell>
+                      <TableCell>
+                        {user ? (
+                          <div>
+                            <p className="font-medium">{user.name}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">N/A</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">{order.templateName}</TableCell>
+                      <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                        {order.requirements || "Not submitted"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>₹{order.price}</TableCell>
+                      <TableCell>{getStatusBadge(order.developerStatus)}</TableCell>
+                      <TableCell>
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${
+                            order.paymentStatus === "paid"
+                              ? "bg-green-500/10 text-green-500"
+                              : "bg-yellow-500/10 text-yellow-500"
+                          }`}
+                        >
+                          {order.paymentStatus}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link to={`/admin/orders/${order._id}`} className="flex items-center gap-2">
+                                <Eye className="w-4 h-4" />
+                                View Details
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleStatusChange(order._id, "accepted")}
+                              className="flex items-center gap-2 text-green-500"
+                            >
+                              <Check className="w-4 h-4" />
+                              Accept
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleStatusChange(order._id, "rejected")}
+                              className="flex items-center gap-2 text-red-500"
+                            >
+                              <X className="w-4 h-4" />
+                              Reject
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleStatusChange(order._id, "in_progress")}
+                              className="flex items-center gap-2 text-blue-500"
+                            >
+                              <Loader2 className="w-4 h-4" />
+                              Mark In Progress
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleStatusChange(order._id, "completed")}
+                              className="flex items-center gap-2 text-green-500"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              Mark Completed
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {orders.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      No orders found
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>

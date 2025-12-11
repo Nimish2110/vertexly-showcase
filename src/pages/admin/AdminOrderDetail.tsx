@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth, Purchase } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { adminGetOrders, adminUpdateOrderStatus, adminUploadDelivery, Order } from "@/lib/api";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,16 +21,42 @@ import { toast } from "sonner";
 const AdminOrderDetail = () => {
   const navigate = useNavigate();
   const { orderId } = useParams();
-  const { isLoggedIn, isAdmin, purchases, updateOrderStatus, updateOrderDownloadLink } = useAuth();
-  const [downloadLink, setDownloadLink] = useState("");
-
-  const order = purchases.find((p) => p.id === orderId);
+  const { isLoggedIn, isAdmin, isLoading: authLoading } = useAuth();
+  const [order, setOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!isLoggedIn || !isAdmin()) {
-      navigate("/");
+    if (!authLoading && (!isLoggedIn || !isAdmin())) {
+      navigate("/admin");
     }
-  }, [isLoggedIn, isAdmin, navigate]);
+  }, [isLoggedIn, isAdmin, authLoading, navigate]);
+
+  useEffect(() => {
+    const fetchOrder = async () => {
+      if (!isLoggedIn || !isAdmin() || !orderId) return;
+      
+      setIsLoading(true);
+      const { data, error } = await adminGetOrders();
+      if (data && !error) {
+        const foundOrder = data.find((o) => o._id === orderId);
+        setOrder(foundOrder || null);
+      }
+      setIsLoading(false);
+    };
+    fetchOrder();
+  }, [isLoggedIn, isAdmin, orderId]);
+
+  if (authLoading || isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (!order) {
     return (
@@ -45,19 +72,37 @@ const AdminOrderDetail = () => {
     );
   }
 
-  const handleStatusChange = (status: Purchase["developerStatus"]) => {
-    updateOrderStatus(order.id, status);
-    toast.success(`Order status updated to ${status.replace("_", " ")}`);
+  const handleStatusChange = async (status: Order["developerStatus"]) => {
+    const { data, error } = await adminUpdateOrderStatus(order._id, status);
+    if (data && !error) {
+      setOrder({ ...order, developerStatus: status });
+      toast.success(`Order status updated to ${status.replace("_", " ")}`);
+    } else {
+      toast.error(error || "Failed to update status");
+    }
   };
 
-  const handleUploadLink = () => {
-    if (!downloadLink) {
-      toast.error("Please enter a download link");
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith(".zip")) {
+      toast.error("Please upload a ZIP file");
       return;
     }
-    updateOrderDownloadLink(order.id, downloadLink);
-    toast.success("Download link added successfully");
+
+    setIsUploading(true);
+    const { data, error } = await adminUploadDelivery(order._id, file);
+    if (data && !error) {
+      setOrder({ ...order, downloadLink: data.downloadLink });
+      toast.success("File uploaded successfully");
+    } else {
+      toast.error(error || "Failed to upload file");
+    }
+    setIsUploading(false);
   };
+
+  const user = typeof order.user === "object" ? order.user : null;
 
   const statusTimeline = [
     { status: "pending", label: "Order Placed", active: true },
@@ -94,7 +139,9 @@ const AdminOrderDetail = () => {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Order #{order.id}</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              Order #{order._id.slice(-6)}
+            </h1>
             <p className="text-muted-foreground">{order.templateName}</p>
           </div>
         </div>
@@ -119,7 +166,7 @@ const AdminOrderDetail = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Order Date</p>
                     <p className="font-medium">
-                      {new Date(order.selectedDate).toLocaleDateString()}
+                      {new Date(order.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
@@ -134,6 +181,18 @@ const AdminOrderDetail = () => {
                       {order.paymentStatus}
                     </span>
                   </div>
+                  {user && (
+                    <>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Customer Name</p>
+                        <p className="font-medium">{user.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Customer Email</p>
+                        <p className="font-medium">{user.email}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -144,7 +203,9 @@ const AdminOrderDetail = () => {
               </CardHeader>
               <CardContent>
                 <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-foreground whitespace-pre-wrap">{order.requirements}</p>
+                  <p className="text-foreground whitespace-pre-wrap">
+                    {order.requirements || "No requirements submitted yet"}
+                  </p>
                 </div>
                 {order.isCustom && (
                   <div className="mt-4 grid grid-cols-3 gap-4">
@@ -175,24 +236,33 @@ const AdminOrderDetail = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="downloadLink">Download Link (ZIP file URL)</Label>
+                  <Label htmlFor="fileUpload">Upload ZIP File</Label>
                   <div className="flex gap-2">
                     <Input
-                      id="downloadLink"
-                      placeholder="https://drive.google.com/..."
-                      value={downloadLink}
-                      onChange={(e) => setDownloadLink(e.target.value)}
+                      id="fileUpload"
+                      type="file"
+                      accept=".zip"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="cursor-pointer"
                     />
-                    <Button onClick={handleUploadLink}>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Save
+                    <Button 
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4 mr-2" />
+                      )}
+                      {isUploading ? "Uploading..." : "Upload"}
                     </Button>
                   </div>
                 </div>
                 {order.downloadLink && (
                   <div className="p-3 bg-green-500/10 rounded-lg">
                     <p className="text-sm text-green-500">
-                      ✓ Download link saved: {order.downloadLink}
+                      ✓ File uploaded successfully
                     </p>
                   </div>
                 )}

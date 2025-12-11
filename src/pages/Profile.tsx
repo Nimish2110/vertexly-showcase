@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, LogOut, Home } from "lucide-react";
-import { useAuth, Purchase } from "@/contexts/AuthContext";
+import { User, LogOut, Home, Download, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { getMyOrders, createOrder, downloadDelivery, Order } from "@/lib/api";
 import AuthHeader from "@/components/AuthHeader";
 import AuthButton from "@/components/AuthButton";
 import StatusIcon from "@/components/StatusIcon";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -16,23 +16,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, purchases, logout, addPurchase } = useAuth();
+  const { user, logout, isLoggedIn, isLoading: authLoading } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [websiteType, setWebsiteType] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
   const [customRequirements, setCustomRequirements] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      navigate("/login");
+    }
+  }, [authLoading, isLoggedIn, navigate]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!isLoggedIn) return;
+      
+      setIsLoading(true);
+      const { data, error } = await getMyOrders();
+      if (data && !error) {
+        setOrders(data);
+      } else if (error) {
+        toast.error(error);
+      }
+      setIsLoading(false);
+    };
+    fetchOrders();
+  }, [isLoggedIn]);
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
-  const handleCustomSubmit = () => {
+  const handleCustomSubmit = async () => {
     if (!websiteType || !businessType || !deliveryTime || !customRequirements) {
+      toast.error("Please fill in all fields");
       return;
     }
 
@@ -43,28 +70,56 @@ const Profile = () => {
       "7-days": 8000,
     };
 
-    addPurchase({
+    setIsSubmitting(true);
+    const { data, error } = await createOrder({
       templateName: "Custom Website",
       price: deliveryPrices[deliveryTime] || 10000,
       requirements: customRequirements,
-      selectedDate: new Date().toISOString().split("T")[0],
-      developerStatus: "pending",
-      paymentStatus: "pending",
-      deliveryStatus: "pending",
       isCustom: true,
       websiteType,
       businessType,
       deliveryTime,
     });
 
-    setSubmitSuccess(true);
-    setWebsiteType("");
-    setBusinessType("");
-    setDeliveryTime("");
-    setCustomRequirements("");
-
-    setTimeout(() => setSubmitSuccess(false), 3000);
+    if (data && !error) {
+      setOrders((prev) => [data, ...prev]);
+      setSubmitSuccess(true);
+      setWebsiteType("");
+      setBusinessType("");
+      setDeliveryTime("");
+      setCustomRequirements("");
+      toast.success("Custom website request submitted!");
+      setTimeout(() => setSubmitSuccess(false), 3000);
+    } else {
+      toast.error(error || "Failed to submit request");
+    }
+    setIsSubmitting(false);
   };
+
+  const handleDownload = async (orderId: string, templateName: string) => {
+    const { data, error } = await downloadDelivery(orderId);
+    if (data && !error) {
+      const url = window.URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${templateName.replace(/\s+/g, "-").toLowerCase()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Download started!");
+    } else {
+      toast.error(error || "Download failed");
+    }
+  };
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background py-8 px-4">
@@ -85,10 +140,10 @@ const Profile = () => {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-foreground">
-                {user?.name || "John Doe"}
+                {user?.name || "User"}
               </h2>
               <p className="text-muted-foreground">
-                {user?.email || "john@example.com"}
+                {user?.email || ""}
               </p>
             </div>
           </div>
@@ -99,101 +154,114 @@ const Profile = () => {
           <h3 className="text-xl font-semibold text-foreground mb-6">
             My Website Purchases
           </h3>
-          <table className="w-full min-w-[800px]">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
-                  Template Name
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
-                  Price
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
-                  Requirements
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
-                  Selected Date
-                </th>
-                <th className="text-center py-3 px-4 text-sm font-semibold text-foreground">
-                  Developer Status
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
-                  Payment Status
-                </th>
-                <th className="text-center py-3 px-4 text-sm font-semibold text-foreground">
-                  Delivery Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {purchases.map((purchase: Purchase) => (
-                <tr
-                  key={purchase.id}
-                  className="border-b border-border hover:bg-muted/50 transition-colors"
-                >
-                  <td className="py-4 px-4 text-foreground font-medium">
-                    {purchase.templateName}
-                    {purchase.isCustom && (
-                      <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                        Custom
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-4 px-4 text-foreground">
-                    ₹{purchase.price.toLocaleString()}
-                  </td>
-                  <td className="py-4 px-4 text-muted-foreground text-sm max-w-[200px] truncate">
-                    {purchase.requirements}
-                  </td>
-                  <td className="py-4 px-4 text-muted-foreground">
-                    {purchase.selectedDate}
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex justify-center">
-                      <StatusIcon
-                        status={purchase.developerStatus}
-                        type="icon"
-                      />
-                    </div>
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-2">
-                      {purchase.paymentStatus === "paid" ? (
-                        <span className="text-green-600 font-medium text-sm">
-                          ₹{purchase.price.toLocaleString()} – Paid
+          {orders.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              No orders yet. Start by selecting a template!
+            </p>
+          ) : (
+            <table className="w-full min-w-[800px]">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
+                    Template Name
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
+                    Price
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
+                    Requirements
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
+                    Date
+                  </th>
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-foreground">
+                    Developer Status
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
+                    Payment Status
+                  </th>
+                  <th className="text-center py-3 px-4 text-sm font-semibold text-foreground">
+                    Delivery
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr
+                    key={order._id}
+                    className="border-b border-border hover:bg-muted/50 transition-colors"
+                  >
+                    <td className="py-4 px-4 text-foreground font-medium">
+                      {order.templateName}
+                      {order.isCustom && (
+                        <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                          Custom
                         </span>
-                      ) : purchase.developerStatus === "accepted" ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-foreground">
-                            ₹{purchase.price.toLocaleString()}
+                      )}
+                    </td>
+                    <td className="py-4 px-4 text-foreground">
+                      ₹{order.price.toLocaleString()}
+                    </td>
+                    <td className="py-4 px-4 text-muted-foreground text-sm max-w-[200px] truncate">
+                      {order.requirements}
+                    </td>
+                    <td className="py-4 px-4 text-muted-foreground">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex justify-center">
+                        <StatusIcon
+                          status={order.developerStatus}
+                          type="icon"
+                        />
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-2">
+                        {order.paymentStatus === "paid" ? (
+                          <span className="text-green-600 font-medium text-sm">
+                            ₹{order.price.toLocaleString()} – Paid
                           </span>
+                        ) : order.developerStatus === "accepted" ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-foreground">
+                              ₹{order.price.toLocaleString()}
+                            </span>
+                            <Button
+                              size="sm"
+                              disabled
+                              className="gradient-cta text-white text-xs h-7 opacity-60"
+                            >
+                              Pay Now
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            ₹{order.price.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex justify-center items-center gap-2">
+                        <StatusIcon status={order.deliveryStatus} type="dot" />
+                        {order.developerStatus === "completed" && order.downloadLink && (
                           <Button
                             size="sm"
-                            disabled
-                            className="gradient-cta text-white text-xs h-7 opacity-60"
+                            variant="ghost"
+                            onClick={() => handleDownload(order._id, order.templateName)}
+                            className="text-primary hover:text-primary/80"
                           >
-                            Pay Now
+                            <Download className="w-4 h-4" />
                           </Button>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">
-                          ₹{purchase.price.toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-4 px-4">
-                    <div className="flex justify-center items-center gap-2">
-                      <StatusIcon status={purchase.deliveryStatus} type="dot" />
-                      {purchase.developerStatus === "completed" && (
-                        <span className="text-green-600 text-xs font-medium">Completed</span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Custom Website Builder */}
@@ -266,8 +334,12 @@ const Profile = () => {
             />
           </div>
 
-          <AuthButton variant="primary" onClick={handleCustomSubmit}>
-            Submit Request
+          <AuthButton 
+            variant="primary" 
+            onClick={handleCustomSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Submitting..." : "Submit Request"}
           </AuthButton>
         </div>
 

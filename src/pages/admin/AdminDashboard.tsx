@@ -1,27 +1,44 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { adminGetOrders, Order } from "@/lib/api";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, Clock, Loader2, CheckCircle } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, isAdmin, purchases } = useAuth();
+  const { isLoggedIn, isAdmin, isLoading: authLoading } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoggedIn || !isAdmin()) {
-      navigate("/");
+    if (!authLoading && (!isLoggedIn || !isAdmin())) {
+      navigate("/admin");
     }
-  }, [isLoggedIn, isAdmin, navigate]);
+  }, [isLoggedIn, isAdmin, authLoading, navigate]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!isLoggedIn || !isAdmin()) return;
+      
+      setIsLoading(true);
+      const { data, error } = await adminGetOrders();
+      if (data && !error) {
+        setOrders(data);
+      }
+      setIsLoading(false);
+    };
+    fetchOrders();
+  }, [isLoggedIn, isAdmin]);
 
   const stats = {
-    total: purchases.length,
-    pending: purchases.filter(
+    total: orders.length,
+    pending: orders.filter(
       (p) => p.developerStatus === "pending" || p.developerStatus === "requirements_submitted"
     ).length,
-    inProgress: purchases.filter((p) => p.developerStatus === "in_progress" || p.developerStatus === "accepted").length,
-    completed: purchases.filter((p) => p.developerStatus === "completed").length,
+    inProgress: orders.filter((p) => p.developerStatus === "in_progress" || p.developerStatus === "accepted").length,
+    completed: orders.filter((p) => p.developerStatus === "completed").length,
   };
 
   const statCards = [
@@ -54,6 +71,16 @@ const AdminDashboard = () => {
       bgColor: "bg-green-500/10",
     },
   ];
+
+  if (authLoading || isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -93,15 +120,15 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {purchases.slice(0, 5).map((order) => (
+              {orders.slice(0, 5).map((order) => (
                 <div
-                  key={order.id}
+                  key={order._id}
                   className="flex items-center justify-between p-4 bg-muted/50 rounded-lg"
                 >
                   <div>
                     <p className="font-medium text-foreground">{order.templateName}</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(order.selectedDate).toLocaleDateString()}
+                      {new Date(order.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
@@ -124,6 +151,9 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               ))}
+              {orders.length === 0 && (
+                <p className="text-center text-muted-foreground py-4">No orders yet</p>
+              )}
             </div>
           </CardContent>
         </Card>
