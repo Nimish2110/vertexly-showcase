@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { createOrder, submitRequirements } from "@/lib/api";
 
 interface Template {
   id: string;
@@ -71,11 +72,14 @@ const templates: Record<string, Template> = {
 const Checkout = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const { toast } = useToast();
-  const { addPurchase } = useAuth();
+  const { isLoggedIn } = useAuth();
+  const navigate = useNavigate();
   const [discountCode, setDiscountCode] = useState("");
   const [showRequirements, setShowRequirements] = useState(false);
   const [requirements, setRequirements] = useState("");
   const [requirementsSubmitted, setRequirementsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
 
   const template = templateId ? templates[templateId] : null;
 
@@ -96,7 +100,40 @@ const Checkout = () => {
   const discount = discountCode.toLowerCase() === "welcome10" ? template.price * 0.1 : 0;
   const totalAmount = template.price + customizationCharges - discount;
 
-  const handleRequirementsSubmit = () => {
+  const handleMoveToRequirements = async () => {
+    if (!isLoggedIn) {
+      toast({
+        title: "Login Required",
+        description: "Please login to continue with your order.",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    // Create the order first
+    const { data, error } = await createOrder({
+      templateId: template.id,
+      templateName: template.title,
+      price: totalAmount,
+    });
+
+    if (data && !error) {
+      setOrderId(data._id);
+      setShowRequirements(true);
+    } else {
+      toast({
+        title: "Error",
+        description: error || "Failed to create order",
+        variant: "destructive",
+      });
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleRequirementsSubmit = async () => {
     if (!requirements.trim()) {
       toast({
         title: "Requirements Required",
@@ -106,23 +143,33 @@ const Checkout = () => {
       return;
     }
 
-    // Add purchase to AuthContext
-    addPurchase({
-      templateName: template!.title,
-      price: totalAmount,
-      requirements: requirements,
-      selectedDate: new Date().toISOString().split("T")[0],
-      developerStatus: "requirements_submitted",
-      paymentStatus: "pending",
-      deliveryStatus: "pending",
-    });
+    if (!orderId) {
+      toast({
+        title: "Error",
+        description: "Order not found. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setRequirementsSubmitted(true);
+    setIsSubmitting(true);
     
-    toast({
-      title: "Requirements Received",
-      description: "Check your project status in your profile.",
-    });
+    const { data, error } = await submitRequirements(orderId, requirements);
+
+    if (data && !error) {
+      setRequirementsSubmitted(true);
+      toast({
+        title: "Requirements Received",
+        description: "Check your project status in your profile.",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: error || "Failed to submit requirements",
+        variant: "destructive",
+      });
+    }
+    setIsSubmitting(false);
   };
 
   return (
@@ -193,11 +240,12 @@ const Checkout = () => {
           {/* Move to Requirements Button */}
           {!showRequirements && (
             <Button
-              onClick={() => setShowRequirements(true)}
+              onClick={handleMoveToRequirements}
               className="w-full mt-6 gradient-primary"
               size="lg"
+              disabled={isSubmitting}
             >
-              Move to Requirements
+              {isSubmitting ? "Processing..." : "Move to Requirements"}
               <ChevronDown className="w-4 h-4 ml-2" />
             </Button>
           )}
@@ -231,8 +279,9 @@ const Checkout = () => {
                   onClick={handleRequirementsSubmit}
                   className="w-full mt-6 gradient-primary"
                   size="lg"
+                  disabled={isSubmitting}
                 >
-                  Confirm Requirements
+                  {isSubmitting ? "Submitting..." : "Confirm Requirements"}
                 </Button>
               </>
             ) : (

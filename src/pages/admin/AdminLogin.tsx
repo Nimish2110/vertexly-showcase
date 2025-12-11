@@ -11,6 +11,7 @@ const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login, isLoggedIn, isAdmin } = useAuth();
 
@@ -21,7 +22,7 @@ const AdminLogin = () => {
     }
   }, [isLoggedIn, isAdmin, navigate]);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!email) {
@@ -41,13 +42,25 @@ const AdminLogin = () => {
     }
 
     setError("");
-    login(email, password);
+    setIsLoading(true);
 
-    // Check if login was successful as admin
-    if (email === "admin@vertexly.com" && password === "admin123") {
-      navigate("/admin/dashboard");
-    } else {
-      setError("Invalid admin credentials");
+    try {
+      const { success, error: loginError } = await login(email, password);
+      
+      if (success) {
+        // Check if user is admin after login
+        // The isAdmin check will happen in the useEffect above
+        // Give it a moment to update state
+        setTimeout(() => {
+          navigate("/admin/dashboard");
+        }, 100);
+      } else {
+        setError(loginError || "Invalid admin credentials");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -98,16 +111,10 @@ const AdminLogin = () => {
 
             {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <AuthButton type="submit" variant="primary">
-              Sign In as Admin
+            <AuthButton type="submit" variant="primary" disabled={isLoading}>
+              {isLoading ? "Signing in..." : "Sign In as Admin"}
             </AuthButton>
           </form>
-
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            <p className="text-xs text-muted-foreground text-center">
-              ⚠️ This is a prototype admin panel. For demo purposes only.
-            </p>
-          </div>
         </div>
 
         <div className="mt-6 text-center">

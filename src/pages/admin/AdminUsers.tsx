@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { adminGetUsers, adminDeleteUser, adminRestoreUser, User } from "@/lib/api";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,85 +13,73 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, RotateCcw, UserCircle } from "lucide-react";
+import { Trash2, RotateCcw, UserCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-interface MockUser {
-  id: string;
-  name: string;
-  email: string;
-  role: "user" | "admin";
-  status: "active" | "deleted";
-  createdAt: string;
-}
 
 const AdminUsers = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, isAdmin } = useAuth();
-
-  // Mock users data
-  const [users, setUsers] = useState<MockUser[]>([
-    {
-      id: "1",
-      name: "John Doe",
-      email: "john@example.com",
-      role: "user",
-      status: "active",
-      createdAt: "2024-01-10",
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      email: "jane@example.com",
-      role: "user",
-      status: "active",
-      createdAt: "2024-01-12",
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      email: "mike@example.com",
-      role: "user",
-      status: "deleted",
-      createdAt: "2024-01-15",
-    },
-    {
-      id: "4",
-      name: "Sarah Wilson",
-      email: "sarah@example.com",
-      role: "user",
-      status: "active",
-      createdAt: "2024-01-18",
-    },
-    {
-      id: "5",
-      name: "Admin User",
-      email: "admin@vertexly.com",
-      role: "admin",
-      status: "active",
-      createdAt: "2024-01-01",
-    },
-  ]);
+  const { isLoggedIn, isAdmin, isLoading: authLoading } = useAuth();
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoggedIn || !isAdmin()) {
-      navigate("/");
+    if (!authLoading && (!isLoggedIn || !isAdmin())) {
+      navigate("/admin");
     }
-  }, [isLoggedIn, isAdmin, navigate]);
+  }, [isLoggedIn, isAdmin, authLoading, navigate]);
 
-  const handleSoftDelete = (userId: string) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, status: "deleted" } : u))
-    );
-    toast.success("User has been soft deleted");
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!isLoggedIn || !isAdmin()) return;
+      
+      setIsLoading(true);
+      const { data, error } = await adminGetUsers();
+      if (data && !error) {
+        setUsers(data);
+      } else if (error) {
+        toast.error(error);
+      }
+      setIsLoading(false);
+    };
+    fetchUsers();
+  }, [isLoggedIn, isAdmin]);
+
+  const handleSoftDelete = async (userId: string) => {
+    const { data, error } = await adminDeleteUser(userId);
+    if (data && !error) {
+      setUsers((prev) =>
+        prev.map((u) => (u._id === userId ? { ...u, status: "deleted" } : u))
+      );
+      toast.success("User has been soft deleted");
+    } else {
+      toast.error(error || "Failed to delete user");
+    }
   };
 
-  const handleRestore = (userId: string) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, status: "active" } : u))
-    );
-    toast.success("User has been restored");
+  const handleRestore = async (userId: string) => {
+    const { data, error } = await adminRestoreUser(userId);
+    if (data && !error) {
+      setUsers((prev) =>
+        prev.map((u) => (u._id === userId ? { ...u, status: "active" } : u))
+      );
+      toast.success("User has been restored");
+    } else {
+      toast.error(error || "Failed to restore user");
+    }
   };
+
+  if (authLoading || isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  const activeUsers = users.filter((u) => u.status === "active").length;
+  const deletedUsers = users.filter((u) => u.status === "deleted").length;
 
   return (
     <AdminLayout>
@@ -120,9 +109,7 @@ const AdminUsers = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-500">
-                {users.filter((u) => u.status === "active").length}
-              </div>
+              <div className="text-3xl font-bold text-green-500">{activeUsers}</div>
             </CardContent>
           </Card>
           <Card className="border-border">
@@ -132,9 +119,7 @@ const AdminUsers = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-500">
-                {users.filter((u) => u.status === "deleted").length}
-              </div>
+              <div className="text-3xl font-bold text-red-500">{deletedUsers}</div>
             </CardContent>
           </Card>
         </div>
@@ -157,7 +142,7 @@ const AdminUsers = () => {
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
-                  <TableRow key={user.id} className={user.status === "deleted" ? "opacity-50" : ""}>
+                  <TableRow key={user._id} className={user.status === "deleted" ? "opacity-50" : ""}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -186,20 +171,22 @@ const AdminUsers = () => {
                             : "bg-red-500/10 text-red-500"
                         }`}
                       >
-                        {user.status}
+                        {user.status || "active"}
                       </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Date(user.createdAt).toLocaleDateString()}
+                      {user.createdAt
+                        ? new Date(user.createdAt).toLocaleDateString()
+                        : "N/A"}
                     </TableCell>
                     <TableCell className="text-right">
                       {user.role !== "admin" && (
                         <>
-                          {user.status === "active" ? (
+                          {user.status !== "deleted" ? (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleSoftDelete(user.id)}
+                              onClick={() => handleSoftDelete(user._id)}
                               className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -208,7 +195,7 @@ const AdminUsers = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleRestore(user.id)}
+                              onClick={() => handleRestore(user._id)}
                               className="text-green-500 hover:text-green-600 hover:bg-green-500/10"
                             >
                               <RotateCcw className="w-4 h-4" />
@@ -219,6 +206,13 @@ const AdminUsers = () => {
                     </TableCell>
                   </TableRow>
                 ))}
+                {users.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No users found
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>
