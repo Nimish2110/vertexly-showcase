@@ -24,7 +24,7 @@ const templates: Record<string, Template> = {
     image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=500&auto=format",
     category: "E-commerce",
     title: "Zay Ecommerce",
-    description: "A modern, fully responsive e-commerce template with product showcases, shopping cart, and clean design perfect for online stores.",
+    description: "A modern, fully responsive e-commerce template.",
     price: 5000,
   },
   motora: {
@@ -32,7 +32,7 @@ const templates: Record<string, Template> = {
     image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=500&auto=format",
     category: "Automotive",
     title: "Motora Car Service",
-    description: "Professional car service and automotive business template with service listings, contact forms, and stunning visual design.",
+    description: "Professional automotive template.",
     price: 6000,
   },
   famms: {
@@ -40,7 +40,7 @@ const templates: Record<string, Template> = {
     image: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=500&auto=format",
     category: "Fashion & Retail",
     title: "Famms Fashion Store",
-    description: "Stylish fashion e-commerce template with elegant product displays, testimonials, and modern design perfect for clothing stores.",
+    description: "Modern fashion storefront template.",
     price: 6500,
   },
   podtalk: {
@@ -48,7 +48,7 @@ const templates: Record<string, Template> = {
     image: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=500&auto=format",
     category: "Media & Podcast",
     title: "Pod Talk Podcast",
-    description: "Modern podcast template with audio player integration, episode listings, and beautiful wave animations for content creators.",
+    description: "Podcast template with audio integration.",
     price: 7000,
   },
   glossytouch: {
@@ -56,7 +56,7 @@ const templates: Record<string, Template> = {
     image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&auto=format",
     category: "Creative Portfolio",
     title: "Glossy Touch Portfolio",
-    description: "Eye-catching portfolio template with smooth animations, modern design, and perfect showcase for creative professionals.",
+    description: "Portfolio for creative professionals.",
     price: 7500,
   },
   urotaxi: {
@@ -64,7 +64,7 @@ const templates: Record<string, Template> = {
     image: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=500&auto=format",
     category: "Transportation",
     title: "UroTaxi Service",
-    description: "Professional taxi and transportation service template with booking features, service highlights, and clean modern interface.",
+    description: "Taxi and transport service template.",
     price: 8000,
   },
 };
@@ -74,6 +74,7 @@ const Checkout = () => {
   const { toast } = useToast();
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
+
   const [discountCode, setDiscountCode] = useState("");
   const [showRequirements, setShowRequirements] = useState(false);
   const [requirements, setRequirements] = useState("");
@@ -85,13 +86,8 @@ const Checkout = () => {
 
   if (!template) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Template Not Found</h1>
-          <Link to="/templates">
-            <Button className="gradient-primary">Back to Templates</Button>
-          </Link>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <h1 className="text-2xl font-bold">Template Not Found</h1>
       </div>
     );
   }
@@ -100,11 +96,14 @@ const Checkout = () => {
   const discount = discountCode.toLowerCase() === "welcome10" ? template.price * 0.1 : 0;
   const totalAmount = template.price + customizationCharges - discount;
 
+  // =============================
+  // CREATE ORDER
+  // =============================
   const handleMoveToRequirements = async () => {
     if (!isLoggedIn) {
       toast({
         title: "Login Required",
-        description: "Please login to continue with your order.",
+        description: "Please login to continue.",
         variant: "destructive",
       });
       navigate("/login");
@@ -112,32 +111,37 @@ const Checkout = () => {
     }
 
     setIsSubmitting(true);
-    
-    // Create the order first
+
     const { data, error } = await createOrder({
-  templateId: template.id,
-  customizationPrice: 500,
-  discount: discount,
-});
+      templateId: template.id,
+      customizationPrice: 500,
+      discount,
+    });
 
-console.log("RAW ORDER RESPONSE →", data);
+    console.log("ORDER RESPONSE →", data);
 
-if (data && data.order) {
-  setOrderId(data.order._id);
-  setShowRequirements(true);
-} else {
-  toast({
-    title: "Error",
-    description: error || "Failed to create order",
-    variant: "destructive",
-  });
-}
+    if (data && data._id) {
+      setOrderId(data._id); // SAVE THE ORDER ID
+      setShowRequirements(true);
+    } else {
+      toast({
+        title: "Error",
+        description: error || "Order creation failed",
+        variant: "destructive",
+      });
+    }
 
+    setIsSubmitting(false);
+  };
+
+  // =============================
+  // SUBMIT REQUIREMENTS
+  // =============================
   const handleRequirementsSubmit = async () => {
     if (!requirements.trim()) {
       toast({
-        title: "Requirements Required",
-        description: "Please enter your website requirements before submitting.",
+        title: "Requirements Missing",
+        description: "Please write your requirements.",
         variant: "destructive",
       });
       return;
@@ -146,107 +150,82 @@ if (data && data.order) {
     if (!orderId) {
       toast({
         title: "Error",
-        description: "Order not found. Please try again.",
+        description: "Order not found.",
         variant: "destructive",
       });
       return;
     }
 
     setIsSubmitting(true);
-    
+
     const { data, error } = await submitRequirements(orderId, requirements);
 
+    console.log("REQUIREMENTS RESPONSE →", data);
+
     if (data) {
-  console.log("REQUIREMENTS SUBMITTED RESPONSE →", data);
-
-  setRequirementsSubmitted(true);
-
-  toast({
-    title: "Requirements Submitted",
-    description: "Your requirements were saved successfully!",
-  });
-} else {
+      setRequirementsSubmitted(true);
+      toast({
+        title: "Requirements Submitted",
+        description: "Your requirements were saved!",
+      });
+    } else {
       toast({
         title: "Error",
-        description: error || "Failed to submit requirements",
+        description: error || "Requirements failed.",
         variant: "destructive",
       });
     }
+
     setIsSubmitting(false);
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 py-12">
-      <div className="w-full max-w-2xl animate-fade-in">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-block mb-6">
-            <h1 className="text-3xl font-bold text-gradient">Vertexly</h1>
-          </Link>
-          <h2 className="text-3xl font-bold text-foreground mb-2">Website Invoice</h2>
-          <p className="text-muted-foreground">Complete your template purchase</p>
-        </div>
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-2xl mx-auto">
 
-        {/* Invoice Card */}
-        <div className="bg-card rounded-2xl shadow-elegant p-8 mb-6">
-          {/* Template Details */}
-          <div className="flex flex-col md:flex-row gap-6 mb-8">
-            <div className="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0">
-              <img
-                src={template.image}
-                alt={template.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="flex-grow">
-              <span className="inline-block bg-primary/10 text-primary px-3 py-1 rounded-full text-xs uppercase font-semibold mb-2">
-                {template.category}
-              </span>
-              <h3 className="text-2xl font-bold text-foreground mb-2">{template.title}</h3>
-              <p className="text-muted-foreground text-sm">{template.description}</p>
+        <h2 className="text-3xl font-bold mb-4">Website Invoice</h2>
+
+        {/* --- TEMPLATE CARD --- */}
+        <div className="bg-card p-6 rounded-xl shadow mb-6">
+          <div className="flex gap-4">
+            <img src={template.image} className="w-40 h-28 rounded-lg object-cover" />
+            <div>
+              <p className="text-sm text-primary">{template.category}</p>
+              <h3 className="text-xl font-bold">{template.title}</h3>
+              <p className="text-muted-foreground">{template.description}</p>
             </div>
           </div>
 
-          {/* Pricing Breakdown */}
-          <div className="border-t border-border pt-6 space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-foreground">Base Price</span>
-              <span className="text-foreground font-semibold">₹{template.price.toLocaleString()}</span>
+          <div className="mt-6 space-y-3">
+            <div className="flex justify-between">
+              <span>Base Price</span>
+              <span>₹{template.price}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-foreground">Customization Charges</span>
-              <span className="text-foreground font-semibold">₹{customizationCharges.toLocaleString()}</span>
+            <div className="flex justify-between">
+              <span>Customization</span>
+              <span>₹500</span>
             </div>
 
-            {/* Discount Code Input */}
-            <div className="space-y-2">
-              <Label htmlFor="discount">Discount Code</Label>
+            <div>
+              <Label>Discount Code</Label>
               <Input
-                id="discount"
-                type="text"
-                placeholder="Enter discount code"
                 value={discountCode}
                 onChange={(e) => setDiscountCode(e.target.value)}
+                placeholder="Enter code"
               />
-              {discount > 0 && (
-                <p className="text-sm text-green-600">Discount applied: -₹{discount.toLocaleString()}</p>
-              )}
             </div>
 
-            {/* Total */}
-            <div className="border-t border-border pt-4 flex justify-between items-center">
-              <span className="text-xl font-bold text-foreground">Total Amount</span>
-              <span className="text-2xl font-bold text-gradient">₹{totalAmount.toLocaleString()}</span>
+            <div className="flex justify-between border-t pt-3 font-bold text-lg">
+              <span>Total</span>
+              <span>₹{totalAmount}</span>
             </div>
           </div>
 
-          {/* Move to Requirements Button */}
           {!showRequirements && (
             <Button
-              onClick={handleMoveToRequirements}
-              className="w-full mt-6 gradient-primary"
-              size="lg"
+              className="w-full mt-6"
               disabled={isSubmitting}
+              onClick={handleMoveToRequirements}
             >
               {isSubmitting ? "Processing..." : "Move to Requirements"}
               <ChevronDown className="w-4 h-4 ml-2" />
@@ -254,68 +233,52 @@ if (data && data.order) {
           )}
         </div>
 
-        {/* Requirements Section */}
+        {/* --- REQUIREMENTS FORM --- */}
         {showRequirements && (
-          <div className="bg-card rounded-2xl shadow-elegant p-8 mb-6 animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-foreground">Tell us about your requirements</h3>
-              <button
-                onClick={() => setShowRequirements(false)}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ChevronUp className="w-6 h-6" />
+          <div className="bg-card p-6 rounded-xl shadow mb-6">
+            <div className="flex justify-between mb-4">
+              <h3 className="text-xl font-bold">Your Requirements</h3>
+              <button onClick={() => setShowRequirements(false)}>
+                <ChevronUp className="w-5 h-5" />
               </button>
             </div>
 
             {!requirementsSubmitted ? (
               <>
-                <div className="space-y-4">
-                  <Textarea
-                    placeholder="Write your website requirements here..."
-                    value={requirements}
-                    onChange={(e) => setRequirements(e.target.value)}
-                    className="min-h-[200px] resize-none"
-                  />
-                </div>
+                <Textarea
+                  value={requirements}
+                  onChange={(e) => setRequirements(e.target.value)}
+                  placeholder="Write your website requirements…"
+                  className="min-h-[200px]"
+                />
 
                 <Button
+                  className="w-full mt-4"
                   onClick={handleRequirementsSubmit}
-                  className="w-full mt-6 gradient-primary"
-                  size="lg"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Submitting..." : "Confirm Requirements"}
                 </Button>
               </>
             ) : (
-              <div className="space-y-6">
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-green-800 font-medium">
-                    Your requirements have been received. Check your project status in your profile.
-                  </p>
-                  <Link to="/profile" className="text-primary hover:underline text-sm mt-2 inline-block">
-                    Go to Profile →
-                  </Link>
-                </div>
-
-                <Button
-                  disabled
-                  className="w-full bg-muted text-muted-foreground cursor-not-allowed"
-                  size="lg"
+              <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                <p className="text-green-800 font-medium">
+                  Your requirements have been submitted!
+                </p>
+                <Link
+                  to="/profile"
+                  className="text-primary underline text-sm mt-2 inline-block"
                 >
-                  Awaiting Developer Acceptance
-                </Button>
+                  Go to Profile →
+                </Link>
               </div>
             )}
           </div>
         )}
 
-        {/* Back Link */}
-        <div className="mt-8 text-center">
-          <Link to="/templates" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            ← Back to Templates
-          </Link>
-        </div>
+        <Link to="/templates" className="text-sm underline">
+          ← Back to Templates
+        </Link>
       </div>
     </div>
   );
