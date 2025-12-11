@@ -7,18 +7,31 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Attach token
+// Attach token automatically
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
+// ========== TOKEN HELPERS ==========
+export const saveToken = (token: string) => {
+  localStorage.setItem(TOKEN_KEY, token);
+};
+
+export const removeToken = () => {
+  localStorage.removeItem(TOKEN_KEY);
+};
+
+export const getToken = () => {
+  return localStorage.getItem(TOKEN_KEY);
+};
+
 // ========== AUTH ==========
 export const registerUser = async (name: string, email: string, password: string) => {
   try {
     const res = await api.post("/auth/register", { name, email, password });
-    localStorage.setItem(TOKEN_KEY, res.data.token);
+    saveToken(res.data.token);
     return { data: res.data };
   } catch (err: any) {
     return { error: err.response?.data?.message || "Register failed" };
@@ -28,7 +41,7 @@ export const registerUser = async (name: string, email: string, password: string
 export const loginUser = async (email: string, password: string) => {
   try {
     const res = await api.post("/auth/login", { email, password });
-    localStorage.setItem(TOKEN_KEY, res.data.token);
+    saveToken(res.data.token);
     return { data: res.data };
   } catch (err: any) {
     return { error: err.response?.data?.message || "Login failed" };
@@ -50,7 +63,7 @@ export const getTemplates = async () => {
   try {
     const res = await api.get("/templates");
     return { data: res.data };
-  } catch (err: any) {
+  } catch (err) {
     return { error: "Template fetch failed" };
   }
 };
@@ -59,7 +72,7 @@ export const getTemplates = async () => {
 export const createOrder = async (orderData: any) => {
   try {
     const res = await api.post("/orders/create", orderData);
-    return { data: res.data }; // returns { message, order }
+    return { data: res.data }; // contains { message, order }
   } catch (err: any) {
     return { error: err.response?.data?.message || "Order creation failed" };
   }
@@ -69,7 +82,7 @@ export const getMyOrders = async () => {
   try {
     const res = await api.get("/orders/my-orders");
     return { data: res.data };
-  } catch (err: any) {
+  } catch (err) {
     return { error: "Failed to load orders" };
   }
 };
@@ -78,7 +91,7 @@ export const submitRequirements = async (orderId: string, requirements: string) 
   try {
     const res = await api.post(`/orders/requirements/${orderId}`, { requirements });
     return { data: res.data };
-  } catch (err: any) {
+  } catch (err) {
     return { error: "Failed to submit requirements" };
   }
 };
@@ -87,7 +100,7 @@ export const downloadDelivery = async (orderId: string) => {
   try {
     const res = await api.get(`/orders/${orderId}/download`, { responseType: "blob" });
     return { data: res.data };
-  } catch (err: any) {
+  } catch {
     return { error: "Download failed" };
   }
 };
@@ -104,7 +117,7 @@ export const adminGetOrders = async () => {
 
 export const adminUpdateOrderStatus = async (orderId: string, status: string) => {
   try {
-    const res = await api.patch(`/admin/${orderId}/status`, { status });
+    const res = await api.patch(`/admin/orders/${orderId}/status`, { status });
     return { data: res.data };
   } catch {
     return { error: "Status update failed" };
@@ -116,7 +129,10 @@ export const adminUploadDelivery = async (orderId: string, file: File) => {
     const fd = new FormData();
     fd.append("file", file);
 
-    const res = await api.patch(`/admin/orders/${orderId}/delivery`, fd);
+    const res = await api.patch(`/admin/orders/${orderId}/delivery`, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
     return { data: res.data };
   } catch {
     return { error: "Upload failed" };
