@@ -63,7 +63,7 @@ export const getTemplates = async () => {
   try {
     const res = await api.get("/templates");
     return { data: res.data };
-  } catch (err) {
+  } catch {
     return { error: "Template fetch failed" };
   }
 };
@@ -72,7 +72,7 @@ export const getTemplates = async () => {
 export const createOrder = async (orderData: any) => {
   try {
     const res = await api.post("/orders/create", orderData);
-    return { data: res.data }; // contains { message, order }
+    return { data: res.data.order }; // <-- returns ONLY the order object
   } catch (err: any) {
     return { error: err.response?.data?.message || "Order creation failed" };
   }
@@ -82,7 +82,7 @@ export const getMyOrders = async () => {
   try {
     const res = await api.get("/orders/my-orders");
     return { data: res.data };
-  } catch (err) {
+  } catch {
     return { error: "Failed to load orders" };
   }
 };
@@ -91,7 +91,7 @@ export const submitRequirements = async (orderId: string, requirements: string) 
   try {
     const res = await api.post(`/orders/requirements/${orderId}`, { requirements });
     return { data: res.data };
-  } catch (err) {
+  } catch {
     return { error: "Failed to submit requirements" };
   }
 };
