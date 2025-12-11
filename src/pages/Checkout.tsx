@@ -122,7 +122,8 @@ const Checkout = () => {
 
     if (data && !error) {
   console.log("ORDER RESPONSE → ", data);
-  setOrderId(data.order._id); // <-- IMPORTANT
+  setOrderId(data.order._id);
+console.log("SET ORDER ID =", data.order._id);
   setShowRequirements(true);
 } else {
       toast({
