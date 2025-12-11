@@ -121,9 +121,10 @@ const Checkout = () => {
     });
 
     if (data && !error) {
-      setOrderId(data._id);
-      setShowRequirements(true);
-    } else {
+  console.log("ORDER CREATED → ", data);
+  setOrderId(data.order._id); // <-- IMPORTANT
+  setShowRequirements(true);
+} else {
       toast({
         title: "Error",
         description: error || "Failed to create order",
