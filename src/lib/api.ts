@@ -110,7 +110,7 @@ export const registerUser = async (
   password: string
 ): Promise<{ data?: AuthResponse; error?: string }> => {
   try {
-    const response = await api.post<AuthResponse>("/auth/register", {
+    const response = await api.post<AuthResponse>("/users/register", {
       name,
       email,
       password,
