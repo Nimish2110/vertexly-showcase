@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://vertexly-backend.onrender.com";
+const API_BASE_URL = "https://vertexly-backend.onrender.com/api";
 const TOKEN_KEY = "vertexly_token";
 
 const api = axios.create({
