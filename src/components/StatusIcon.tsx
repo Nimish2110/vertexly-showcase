@@ -1,11 +1,11 @@
 import { Check, X, Clock, Circle } from "lucide-react";
 
 interface StatusIconProps {
-  status: "pending" | "requirements_submitted" | "accepted" | "rejected" | "paid" | "delivered" | "cancelled" | "in_progress" | "completed";
+  status?: string;
   type?: "dot" | "icon";
 }
 
-const StatusIcon = ({ status, type = "dot" }: StatusIconProps) => {
+const StatusIcon = ({ status = "pending", type = "dot" }: StatusIconProps) => {
   const colorMap: Record<string, string> = {
     pending: "bg-yellow-400",
     requirements_submitted: "bg-blue-500",
