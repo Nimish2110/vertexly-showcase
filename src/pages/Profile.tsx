@@ -72,17 +72,15 @@ const Profile = () => {
 
     setIsSubmitting(true);
     const { data, error } = await createOrder({
-      templateName: "Custom Website",
-      price: deliveryPrices[deliveryTime] || 10000,
-      requirements: customRequirements,
-      isCustom: true,
-      websiteType,
-      businessType,
-      deliveryTime,
+      templateId: "custom",
+      customizationPrice: deliveryPrices[deliveryTime] || 10000,
+      discount: 0,
     });
 
     if (data && !error) {
-      setOrders((prev) => [data, ...prev]);
+      // Refresh orders after creating
+      const { data: ordersData } = await getMyOrders();
+      if (ordersData) setOrders(ordersData);
       setSubmitSuccess(true);
       setWebsiteType("");
       setBusinessType("");
@@ -193,14 +191,14 @@ const Profile = () => {
                   >
                     <td className="py-4 px-4 text-foreground font-medium">
                       {order.templateName}
-                      {order.isCustom && (
+                    {order.isCustom && (
                         <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
                           Custom
                         </span>
                       )}
                     </td>
                     <td className="py-4 px-4 text-foreground">
-                      ₹{order.price.toLocaleString()}
+                      ₹{(order.totalPrice || order.price || 0).toLocaleString()}
                     </td>
                     <td className="py-4 px-4 text-muted-foreground text-sm max-w-[200px] truncate">
                       {order.requirements}
@@ -211,7 +209,7 @@ const Profile = () => {
                     <td className="py-4 px-4">
                       <div className="flex justify-center">
                         <StatusIcon
-                          status={order.developerStatus}
+                          status={order.status || order.developerStatus}
                           type="icon"
                         />
                       </div>
@@ -220,12 +218,12 @@ const Profile = () => {
                       <div className="flex items-center gap-2">
                         {order.paymentStatus === "paid" ? (
                           <span className="text-green-600 font-medium text-sm">
-                            ₹{order.price.toLocaleString()} – Paid
+                            ₹{(order.totalPrice || order.price || 0).toLocaleString()} – Paid
                           </span>
-                        ) : order.developerStatus === "accepted" ? (
+                        ) : (order.status === "accepted" || order.developerStatus === "accepted") ? (
                           <div className="flex items-center gap-2">
                             <span className="text-foreground">
-                              ₹{order.price.toLocaleString()}
+                              ₹{(order.totalPrice || order.price || 0).toLocaleString()}
                             </span>
                             <Button
                               size="sm"
@@ -237,19 +235,19 @@ const Profile = () => {
                           </div>
                         ) : (
                           <span className="text-muted-foreground text-sm">
-                            ₹{order.price.toLocaleString()}
+                            ₹{(order.totalPrice || order.price || 0).toLocaleString()}
                           </span>
                         )}
                       </div>
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex justify-center items-center gap-2">
-                        <StatusIcon status={order.deliveryStatus} type="dot" />
-                        {order.developerStatus === "completed" && order.downloadLink && (
+                        <StatusIcon status={order.status || order.deliveryStatus} type="dot" />
+                        {(order.status === "completed" || order.developerStatus === "completed") && (order.downloadLink || order.deliveryFile) && (
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleDownload(order._id, order.templateName)}
+                            onClick={() => handleDownload(order._id, order.templateName || "download")}
                             className="text-primary hover:text-primary/80"
                           >
                             <Download className="w-4 h-4" />

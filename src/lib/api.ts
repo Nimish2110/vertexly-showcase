@@ -3,6 +3,43 @@ import axios from "axios";
 const API_BASE_URL = "https://vertexly-backend.onrender.com/api";
 const TOKEN_KEY = "vertexly_token";
 
+// ========== TYPES ==========
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  status?: string;
+  isDeleted?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Order {
+  _id: string;
+  userId: string;
+  user?: { name: string; email: string };
+  templateId: string;
+  templateName?: string;
+  status: string;
+  developerStatus?: string;
+  paymentStatus?: string;
+  deliveryStatus?: string;
+  requirements?: string;
+  customizationPrice: number;
+  discount: number;
+  totalPrice: number;
+  price?: number;
+  deliveryFile?: string;
+  downloadLink?: string;
+  isCustom?: boolean;
+  websiteType?: string;
+  businessType?: string;
+  deliveryTime?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
 });

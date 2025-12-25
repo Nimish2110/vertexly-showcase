@@ -1,6 +1,6 @@
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { loginUser } from "@/lib/api";
 import AuthHeader from "@/components/AuthHeader";
 import AuthButton from "@/components/AuthButton";
 import { Input } from "@/components/ui/input";
@@ -8,19 +8,23 @@ import { Label } from "@/components/ui/label";
 import { Shield } from "lucide-react";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("vertexly.in@gmail.com");
+  const [password, setPassword] = useState("shivapal123");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const navigate = useNavigate();
-  const { login, isLoggedIn, isAdmin } = useAuth();
+  
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
-  // Redirect if already logged in as admin
+  // Remove readonly after mount to prevent autofill
   useEffect(() => {
-    if (isLoggedIn && isAdmin()) {
-      navigate("/admin/dashboard");
-    }
-  }, [isLoggedIn, isAdmin, navigate]);
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -45,18 +49,20 @@ const AdminLogin = () => {
     setIsLoading(true);
 
     try {
-      const { success, error: loginError } = await login(email, password);
+      const result = await loginUser(email, password);
       
-      if (success) {
-        // Check if user is admin after login
-        // The isAdmin check will happen in the useEffect above
-        // Give it a moment to update state
-        setTimeout(() => {
-          navigate("/admin/dashboard");
-        }, 100);
-      } else {
-        setError(loginError || "Invalid admin credentials");
+      if (result.error) {
+        setError(result.error);
+        return;
       }
+
+      // Check if user is admin
+      if (result.data?.user?.role !== "admin") {
+        setError("Access denied. Admin only.");
+        return;
+      }
+
+      navigate("/admin/dashboard");
     } catch (err) {
       setError("An unexpected error occurred");
     } finally {
@@ -78,34 +84,57 @@ const AdminLogin = () => {
         </div>
 
         <div className="bg-card rounded-2xl shadow-elegant p-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div className="space-y-2">
-              <Label htmlFor="email">Admin Email</Label>
+              <Label htmlFor="admin-email">Admin Email</Label>
               <Input
-                id="email"
+                ref={emailRef}
+                id="admin-email"
+                name="admin-email-field"
                 type="email"
-                placeholder="admin@vertexly.com"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
                   setError("");
                 }}
                 className={error ? "border-destructive" : ""}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
+                readOnly={!isReady}
+                onFocus={() => {
+                  if (emailRef.current) {
+                    emailRef.current.removeAttribute("readonly");
+                  }
+                }}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="admin-password">Password</Label>
               <Input
-                id="password"
+                ref={passwordRef}
+                id="admin-password"
+                name="admin-password-field"
                 type="password"
-                placeholder="Enter password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
                   setError("");
                 }}
                 className={error ? "border-destructive" : ""}
+                autoComplete="new-password"
+                data-form-type="other"
+                data-lpignore="true"
+                readOnly={!isReady}
+                onFocus={() => {
+                  if (passwordRef.current) {
+                    passwordRef.current.removeAttribute("readonly");
+                  }
+                }}
               />
             </div>
 
