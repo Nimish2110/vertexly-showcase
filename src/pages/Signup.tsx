@@ -75,6 +75,7 @@ const Signup = () => {
               <Input
                 id="name"
                 type="text"
+                name="signup-name-field"
                 placeholder="Enter your full name"
                 value={name}
                 onChange={(e) => {
@@ -82,6 +83,12 @@ const Signup = () => {
                   setErrors({ ...errors, name: "" });
                 }}
                 className={errors.name ? "border-destructive" : ""}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
               />
               {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
             </div>
@@ -91,6 +98,7 @@ const Signup = () => {
               <Input
                 id="email"
                 type="email"
+                name="signup-email-field"
                 placeholder="Enter email address"
                 value={email}
                 onChange={(e) => {
@@ -98,6 +106,12 @@ const Signup = () => {
                   setErrors({ ...errors, email: "" });
                 }}
                 className={errors.email ? "border-destructive" : ""}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
               />
               {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
             </div>
@@ -107,6 +121,7 @@ const Signup = () => {
               <Input
                 id="password"
                 type="password"
+                name="signup-password-field"
                 placeholder="Create password"
                 value={password}
                 onChange={(e) => {
@@ -114,6 +129,12 @@ const Signup = () => {
                   setErrors({ ...errors, password: "" });
                 }}
                 className={errors.password ? "border-destructive" : ""}
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
               />
               {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
             </div>

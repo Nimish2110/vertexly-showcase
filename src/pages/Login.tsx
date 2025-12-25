@@ -65,6 +65,7 @@ const Login = () => {
               <Input
                 id="email"
                 type="email"
+                name="login-email-field"
                 placeholder="Enter email address"
                 value={email}
                 onChange={(e) => {
@@ -72,6 +73,12 @@ const Login = () => {
                   setError("");
                 }}
                 className={error ? "border-destructive" : ""}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
               />
             </div>
 
@@ -80,6 +87,7 @@ const Login = () => {
               <Input
                 id="password"
                 type="password"
+                name="login-password-field"
                 placeholder="Enter password"
                 value={password}
                 onChange={(e) => {
@@ -87,6 +95,12 @@ const Login = () => {
                   setError("");
                 }}
                 className={error ? "border-destructive" : ""}
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
               />
             </div>
 
