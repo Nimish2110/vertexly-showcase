@@ -69,11 +69,16 @@ export const getTemplates = async () => {
 };
 
 // ========== ORDERS ==========
-export const createOrder = async (orderData: any) => {
+export const createOrder = async (orderData: {
+  templateId: string;
+  customizationPrice: number;
+  discount: number;
+}) => {
   try {
     const res = await api.post("/orders/create", orderData);
-    return { data: res.data.order }; // <-- returns ONLY the order object
+    return { data: res.data };
   } catch (err: any) {
+    console.error("Create order error:", err.response?.data);
     return { error: err.response?.data?.message || "Order creation failed" };
   }
 };
