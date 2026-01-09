@@ -103,7 +103,7 @@ Team Vertexly — Product designers, developers, and visionaries
 
 📩 Email: nimishnirmal@gmail.com
 
-🌐 Website: https://vertexly.vercel.app
+🌐 Website: vertexly-showcase.vercel.app
 
 💼 GitHub: github.com/Nimish2110/vertexly
 
