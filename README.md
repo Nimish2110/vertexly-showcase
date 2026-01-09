@@ -1,7 +1,7 @@
 ## 🇮🇳 Vertexly — The Future of Website Creation in India
 💼 An Investor & Product Overview Document
 
-🌐 Live Demo: https://vertexly.vercel.app
+🌐 Live Demo: vertexly-showcase.vercel.app
 
 # 🚀 Introduction
 
