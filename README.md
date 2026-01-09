@@ -1,7 +1,7 @@
 ## 🇮🇳 Vertexly — The Future of Website Creation in India
 💼 An Investor & Product Overview Document
 
-🌐 Live Demo: vertexly-showcase.vercel.app
+🌐 Live Demo: https://vertexly-showcase.vercel.app/
 
 # 🚀 Introduction
 
@@ -103,7 +103,7 @@ Team Vertexly — Product designers, developers, and visionaries
 
 📩 Email: nimishnirmal@gmail.com
 
-🌐 Website: vertexly-showcase.vercel.app
+🌐 Website: https://vertexly-showcase.vercel.app/
 
 💼 GitHub: github.com/Nimish2110/vertexly
 
