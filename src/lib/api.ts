@@ -148,28 +148,32 @@ export const downloadDelivery = async (orderId: string) => {
 };
 
 // ========== PAYMENTS ==========
-export const createPayment = async (orderId: string) => {
+export const createPaymentOrder = async (orderId: string) => {
   try {
-    const res = await api.post("/payments/create", { orderId });
+    const res = await api.post("/payments/create-order", {
+      orderId,
+    });
     return { data: res.data };
   } catch (err: any) {
-    console.error("Create payment error:", err.response?.data);
-    return { error: err.response?.data?.message || "Payment creation failed" };
+    return {
+      error:
+        err.response?.data?.message ||
+        "Payment creation failed",
+    };
   }
 };
 
-export const verifyPayment = async (paymentData: {
-  razorpayPaymentId: string;
-  razorpayOrderId: string;
-  razorpaySignature: string;
+export const verifyPayment = async (payload: {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
   orderId: string;
 }) => {
   try {
-    const res = await api.post("/payments/verify", paymentData);
+    const res = await api.post("/payments/verify", payload);
     return { data: res.data };
   } catch (err: any) {
-    console.error("Verify payment error:", err.response?.data);
-    return { error: err.response?.data?.message || "Payment verification failed" };
+    return { error: "Payment verification failed" };
   }
 };
 
