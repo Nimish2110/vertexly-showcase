@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, LogOut, Home, Download, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getMyOrders, createOrder, downloadDelivery, createPayment, verifyPayment, Order } from "@/lib/api";
+import { createPaymentOrder, verifyPayment } from "@/lib/api";
 import { useRazorpay, RazorpayResponse } from "@/hooks/useRazorpay";
 import AuthHeader from "@/components/AuthHeader";
 import AuthButton from "@/components/AuthButton";
@@ -114,16 +114,54 @@ const Profile = () => {
     }
   };
 
-  const handlePayNow = async (order: Order) => {
-    const orderId = order._id;
-    setPayingOrderId(orderId);
+  
+const handlePayNow = async (orderId: string, amount: number) => {
+  const { data, error } = await createPaymentOrder(orderId);
 
-    const { data, error } = await createPayment(orderId);
-    if (error || !data) {
-      toast.error(error || "Failed to initiate payment");
-      setPayingOrderId(null);
-      return;
-    }
+  if (!data || error) {
+    toast({
+      title: "Payment Error",
+      description: error || "Unable to start payment",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  const options = {
+    key: data.key,
+    amount: data.amount * 100,
+    currency: "INR",
+    name: "Vertexly",
+    description: "Template Purchase",
+    order_id: data.razorpayOrderId,
+
+    handler: async (response: any) => {
+      const verifyRes = await verifyPayment({
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+        orderId,
+      });
+
+      if (verifyRes.data) {
+        toast({
+          title: "Payment Successful",
+          description: "Your payment was verified",
+        });
+      } else {
+        toast({
+          title: "Payment Failed",
+          variant: "destructive",
+        });
+      }
+    },
+
+    theme: { color: "#000000" },
+  };
+
+  const razorpay = new (window as any).Razorpay(options);
+  razorpay.open();
+};
 
     const paymentData = {
       razorpayOrderId: data.razorpayOrderId,
