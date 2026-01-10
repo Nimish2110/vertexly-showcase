@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, LogOut, Home, Download, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getMyOrders, createOrder, downloadDelivery, Order } from "@/lib/api";
+import { getMyOrders, createOrder, downloadDelivery, createPayment, verifyPayment, Order } from "@/lib/api";
+import { useRazorpay, RazorpayResponse } from "@/hooks/useRazorpay";
 import AuthHeader from "@/components/AuthHeader";
 import AuthButton from "@/components/AuthButton";
 import StatusIcon from "@/components/StatusIcon";
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 const Profile = () => {
   const navigate = useNavigate();
   const { user, logout, isLoggedIn, isLoading: authLoading } = useAuth();
+  const { openRazorpay } = useRazorpay();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [websiteType, setWebsiteType] = useState("");
@@ -29,6 +31,7 @@ const Profile = () => {
   const [customRequirements, setCustomRequirements] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
@@ -109,6 +112,60 @@ const Profile = () => {
     } else {
       toast.error(error || "Download failed");
     }
+  };
+
+  const handlePayNow = async (order: Order) => {
+    const orderId = order._id;
+    setPayingOrderId(orderId);
+
+    const { data, error } = await createPayment(orderId);
+    if (error || !data) {
+      toast.error(error || "Failed to initiate payment");
+      setPayingOrderId(null);
+      return;
+    }
+
+    const paymentData = {
+      razorpayOrderId: data.razorpayOrderId,
+      razorpayKey: data.razorpayKey,
+      amount: data.amount,
+      currency: data.currency || "INR",
+      orderId: orderId,
+    };
+
+    const prefill = {
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: "",
+    };
+
+    openRazorpay(
+      paymentData,
+      prefill,
+      async (response: RazorpayResponse) => {
+        // Verify payment on success
+        const verifyResult = await verifyPayment({
+          razorpayPaymentId: response.razorpay_payment_id,
+          razorpayOrderId: response.razorpay_order_id,
+          razorpaySignature: response.razorpay_signature,
+          orderId: orderId,
+        });
+
+        if (verifyResult.error) {
+          toast.error(verifyResult.error);
+        } else {
+          toast.success("Payment successful!");
+          // Refresh orders to update payment status
+          const { data: ordersData } = await getMyOrders();
+          if (ordersData) setOrders(ordersData);
+        }
+        setPayingOrderId(null);
+      },
+      () => {
+        // On dismiss
+        setPayingOrderId(null);
+      }
+    );
   };
 
   if (authLoading || isLoading) {
@@ -217,26 +274,47 @@ const Profile = () => {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-2">
                         {order.paymentStatus === "paid" ? (
-                          <span className="text-green-600 font-medium text-sm">
-                            ₹{(order.totalPrice || order.price || 0).toLocaleString()} – Paid
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-1 rounded text-xs bg-green-500/10 text-green-600 font-medium">
+                              Paid
+                            </span>
+                            <span className="text-green-600 font-medium text-sm">
+                              ₹{(order.totalPrice || order.price || 0).toLocaleString()}
+                            </span>
+                          </div>
                         ) : (order.status === "accepted" || order.developerStatus === "accepted") ? (
                           <div className="flex items-center gap-2">
+                            <span className="px-2 py-1 rounded text-xs bg-yellow-500/10 text-yellow-600 font-medium">
+                              Unpaid
+                            </span>
                             <span className="text-foreground">
                               ₹{(order.totalPrice || order.price || 0).toLocaleString()}
                             </span>
                             <Button
                               size="sm"
-                              disabled
-                              className="gradient-cta text-white text-xs h-7 opacity-60"
+                              onClick={() => handlePayNow(order)}
+                              disabled={payingOrderId === order._id}
+                              className="gradient-cta text-white text-xs h-7"
                             >
-                              Pay Now
+                              {payingOrderId === order._id ? (
+                                <>
+                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  Processing...
+                                </>
+                              ) : (
+                                `Pay ₹${(order.totalPrice || order.price || 0).toLocaleString()}`
+                              )}
                             </Button>
                           </div>
                         ) : (
-                          <span className="text-muted-foreground text-sm">
-                            ₹{(order.totalPrice || order.price || 0).toLocaleString()}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-1 rounded text-xs bg-muted text-muted-foreground">
+                              Pending
+                            </span>
+                            <span className="text-muted-foreground text-sm">
+                              ₹{(order.totalPrice || order.price || 0).toLocaleString()}
+                            </span>
+                          </div>
                         )}
                       </div>
                     </td>
