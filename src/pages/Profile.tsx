@@ -282,7 +282,8 @@ const Profile = () => {
                               ₹{(order.totalPrice || order.price || 0).toLocaleString()}
                             </span>
                           </div>
-                        ) : (order.status === "accepted" || order.developerStatus === "accepted") ? (
+                        ) : (order.requirements && order.requirements.trim() !== "") ? (
+                          // TEMPORARY: Show Pay Now when requirements submitted & unpaid (for testing)
                           <div className="flex items-center gap-2">
                             <span className="px-2 py-1 rounded text-xs bg-yellow-500/10 text-yellow-600 font-medium">
                               Unpaid
