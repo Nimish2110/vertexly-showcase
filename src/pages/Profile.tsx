@@ -114,54 +114,16 @@ const Profile = () => {
   };
 
   
-const handlePayNow = async (orderId: string, amount: number) => {
-  const { data, error } = await createPaymentOrder(orderId);
+  const handlePayNow = async (order: Order) => {
+    const orderId = order._id;
+    setPayingOrderId(orderId);
 
-  if (!data || error) {
-    toast({
-      title: "Payment Error",
-      description: error || "Unable to start payment",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  const options = {
-    key: data.key,
-    amount: data.amount * 100,
-    currency: "INR",
-    name: "Vertexly",
-    description: "Template Purchase",
-    order_id: data.razorpayOrderId,
-
-    handler: async (response: any) => {
-      const verifyRes = await verifyPayment({
-        razorpay_order_id: response.razorpay_order_id,
-        razorpay_payment_id: response.razorpay_payment_id,
-        razorpay_signature: response.razorpay_signature,
-        orderId,
-      });
-
-      if (verifyRes.data) {
-        toast({
-          title: "Payment Successful",
-          description: "Your payment was verified",
-        });
-      } else {
-        toast({
-          title: "Payment Failed",
-          variant: "destructive",
-        });
-      }
-    },
-
-    theme: { color: "#000000" },
-  };
-
-  const razorpay = new (window as any).Razorpay(options);
-  razorpay.open();
-};
-
+     const { data, error } = await createPayment(orderId);
+    if (error || !data) {
+      toast.error(error || "Failed to initiate payment");
+      setPayingOrderId(null);
+      return;
+    }
     const paymentData = {
       razorpayOrderId: data.razorpayOrderId,
       razorpayKey: data.razorpayKey,
