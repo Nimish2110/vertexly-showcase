@@ -13,11 +13,11 @@ export interface RazorpayResponse {
 }
 
 export interface PaymentData {
+  orderId: string;
   razorpayOrderId: string;
-  razorpayKey: string;
+  key: string;
   amount: number;
   currency: string;
-  orderId: string;
 }
 
 const loadRazorpayScript = (): Promise<boolean> => {
@@ -58,7 +58,7 @@ export const useRazorpay = () => {
       }
 
       const options = {
-        key: paymentData.razorpayKey,
+        key: paymentData.key,
         amount: paymentData.amount,
         currency: paymentData.currency || "INR",
         name: "Vertexly",
