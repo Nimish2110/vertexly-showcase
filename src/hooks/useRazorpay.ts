@@ -1,30 +1,9 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 declare global {
   interface Window {
     Razorpay: any;
   }
-}
-
-interface RazorpayOptions {
-  key: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description: string;
-  order_id: string;
-  prefill?: {
-    name?: string;
-    email?: string;
-    contact?: string;
-  };
-  theme?: {
-    color?: string;
-  };
-  handler: (response: RazorpayResponse) => void;
-  modal?: {
-    ondismiss?: () => void;
-  };
 }
 
 export interface RazorpayResponse {
@@ -41,20 +20,44 @@ export interface PaymentData {
   orderId: string;
 }
 
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 export const useRazorpay = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
   const openRazorpay = useCallback(
-    (
+    async (
       paymentData: PaymentData,
       prefill: { name?: string; email?: string; phone?: string },
       onSuccess: (response: RazorpayResponse) => void,
       onDismiss?: () => void
     ) => {
-      if (!window.Razorpay) {
-        console.error("Razorpay SDK not loaded");
+      setIsLoading(true);
+
+      const scriptLoaded = await loadRazorpayScript();
+      
+      if (!scriptLoaded || !window.Razorpay) {
+        console.error("Razorpay SDK failed to load");
+        setIsLoading(false);
+        onDismiss?.();
         return;
       }
 
-      const options: RazorpayOptions = {
+      const options = {
         key: paymentData.razorpayKey,
         amount: paymentData.amount,
         currency: paymentData.currency || "INR",
@@ -69,9 +72,15 @@ export const useRazorpay = () => {
         theme: {
           color: "#6a5ae0",
         },
-        handler: onSuccess,
+        handler: (response: RazorpayResponse) => {
+          setIsLoading(false);
+          onSuccess(response);
+        },
         modal: {
-          ondismiss: onDismiss,
+          ondismiss: () => {
+            setIsLoading(false);
+            onDismiss?.();
+          },
         },
       };
 
@@ -81,5 +90,5 @@ export const useRazorpay = () => {
     []
   );
 
-  return { openRazorpay };
+  return { openRazorpay, isLoading };
 };

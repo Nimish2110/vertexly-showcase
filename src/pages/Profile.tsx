@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { User, LogOut, Home, Download, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMyOrders, createOrder, downloadDelivery, createPayment, verifyPayment, Order } from "@/lib/api";
+import { useRazorpay, RazorpayResponse } from "@/hooks/useRazorpay";
 import AuthHeader from "@/components/AuthHeader";
 import AuthButton from "@/components/AuthButton";
 import StatusIcon from "@/components/StatusIcon";
@@ -144,9 +145,9 @@ const Profile = () => {
       async (response: RazorpayResponse) => {
         // Verify payment on success
         const verifyResult = await verifyPayment({
-          razorpayPaymentId: response.razorpay_payment_id,
-          razorpayOrderId: response.razorpay_order_id,
-          razorpaySignature: response.razorpay_signature,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_signature: response.razorpay_signature,
           orderId: orderId,
         });
 
