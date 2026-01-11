@@ -125,12 +125,13 @@ const Profile = () => {
       setPayingOrderId(null);
       return;
     }
+    // Map backend response: { orderId, amount, currency, key }
     const paymentData = {
-      razorpayOrderId: data.razorpayOrderId,
-      razorpayKey: data.razorpayKey,
+      orderId: orderId,
+      razorpayOrderId: data.orderId, // Backend returns 'orderId' as Razorpay order ID
+      key: data.key, // Backend returns 'key' as Razorpay key
       amount: data.amount,
       currency: data.currency || "INR",
-      orderId: orderId,
     };
 
     const prefill = {
