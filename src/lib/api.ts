@@ -150,8 +150,7 @@ export const downloadDelivery = async (orderId: string) => {
 // ========== PAYMENTS ==========
 export const createPayment = async (orderId: string) => {
   try {
-        const res = await api.post("/payments/create", { orderId });
-    
+    const res = await api.post("/payment/create-order", { orderId });
     return { data: res.data };
   } catch (err: any) {
     console.error("Create payment error:", err.response?.data);
@@ -160,13 +159,13 @@ export const createPayment = async (orderId: string) => {
 };
 
 export const verifyPayment = async (paymentData: {
-  razorpayPaymentId: string;
-  razorpayOrderId: string;
-  razorpaySignature: string;
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
   orderId: string;
 }) => {
   try {
-    const res = await api.post("/payments/verify", paymentData);
+    const res = await api.post("/payment/verify", paymentData);
     return { data: res.data };
   } catch (err: any) {
     console.error("Verify payment error:", err.response?.data);
