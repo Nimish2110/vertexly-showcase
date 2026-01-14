@@ -350,7 +350,7 @@ export const templates: Template[] = [
   },
   {
     id: "edumark",
-    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&auto=format",
+    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&auto=format",
     category: "Education",
     title: "EduMark Academy",
     description: "Modern education and learning platform template with course listings, instructor profiles, and enrollment features.",
