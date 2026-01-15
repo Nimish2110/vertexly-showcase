@@ -34,9 +34,7 @@ const AdminDashboard = () => {
 
   const stats = {
     total: orders.length,
-    pending: orders.filter(
-      (p) => p.developerStatus === "pending" || p.developerStatus === "requirements_submitted"
-    ).length,
+    pending: orders.filter((p) => p.developerStatus === "requirements_submitted").length,
     inProgress: orders.filter((p) => p.developerStatus === "in_progress" || p.developerStatus === "accepted").length,
     completed: orders.filter((p) => p.developerStatus === "completed").length,
   };
