@@ -4,13 +4,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { adminGetOrders, Order } from "@/lib/api";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, Clock, Loader2, CheckCircle } from "lucide-react";
+import { ShoppingCart, Clock, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { isLoggedIn, isAdmin, isLoading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && (!isLoggedIn || !isAdmin())) {
@@ -18,28 +21,37 @@ const AdminDashboard = () => {
     }
   }, [isLoggedIn, isAdmin, authLoading, navigate]);
 
+  const fetchOrders = async () => {
+    if (!isLoggedIn || !isAdmin()) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    const { data, error: apiError } = await adminGetOrders();
+    
+    if (apiError) {
+      console.error("Failed to fetch admin orders:", apiError);
+      setError(apiError);
+      setOrders([]);
+    } else if (data) {
+      setOrders(data);
+    }
+    
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      if (!isLoggedIn || !isAdmin()) return;
-      
-      setIsLoading(true);
-      const { data, error } = await adminGetOrders();
-      if (data && !error) {
-        setOrders(data);
-      }
-      setIsLoading(false);
-    };
     fetchOrders();
   }, [isLoggedIn, isAdmin]);
 
-  const stats = {
+  const stats = error ? null : {
     total: orders.length,
     pending: orders.filter((p) => p.developerStatus === "requirements_submitted").length,
     inProgress: orders.filter((p) => p.developerStatus === "in_progress" || p.developerStatus === "accepted").length,
     completed: orders.filter((p) => p.developerStatus === "completed").length,
   };
 
-  const statCards = [
+  const statCards = stats ? [
     {
       title: "Total Orders",
       value: stats.total,
@@ -68,13 +80,38 @@ const AdminDashboard = () => {
       color: "text-green-500",
       bgColor: "bg-green-500/10",
     },
-  ];
+  ] : [];
 
   if (authLoading || isLoading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+              Welcome back! Here's an overview of your orders.
+            </p>
+          </div>
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Error loading dashboard data</AlertTitle>
+            <AlertDescription className="flex items-center justify-between">
+              <span>{error}</span>
+              <Button variant="outline" size="sm" onClick={fetchOrders}>
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
         </div>
       </AdminLayout>
     );
