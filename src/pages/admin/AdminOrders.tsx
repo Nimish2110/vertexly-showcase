@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { adminGetOrders, adminUpdateOrderStatus, Order } from "@/lib/api";
+import { adminGetOrders, adminAcceptOrder, adminUpdateOrderStatus, Order } from "@/lib/api";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Check, X, Loader2, CheckCircle } from "lucide-react";
+import { MoreHorizontal, Eye, Check, X, Loader2, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminOrders = () => {
@@ -27,6 +27,7 @@ const AdminOrders = () => {
   const { isLoggedIn, isAdmin, isLoading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [acceptingOrderId, setAcceptingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && (!isLoggedIn || !isAdmin())) {
@@ -34,28 +35,41 @@ const AdminOrders = () => {
     }
   }, [isLoggedIn, isAdmin, authLoading, navigate]);
 
+  const fetchOrders = async () => {
+    if (!isLoggedIn || !isAdmin()) return;
+    
+    setIsLoading(true);
+    const { data, error } = await adminGetOrders();
+    if (data && !error) {
+      setOrders(data);
+    } else if (error) {
+      toast.error(error);
+    }
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      if (!isLoggedIn || !isAdmin()) return;
-      
-      setIsLoading(true);
-      const { data, error } = await adminGetOrders();
-      if (data && !error) {
-        setOrders(data);
-      } else if (error) {
-        toast.error(error);
-      }
-      setIsLoading(false);
-    };
     fetchOrders();
   }, [isLoggedIn, isAdmin]);
+
+  const handleAcceptOrder = async (orderId: string) => {
+    setAcceptingOrderId(orderId);
+    const { data, error } = await adminAcceptOrder(orderId);
+    if (data && !error) {
+      // Refetch orders to sync state with backend
+      await fetchOrders();
+      toast.success("Order accepted successfully!");
+    } else {
+      toast.error(error || "Failed to accept order");
+    }
+    setAcceptingOrderId(null);
+  };
 
   const handleStatusChange = async (orderId: string, status: Order["developerStatus"]) => {
     const { data, error } = await adminUpdateOrderStatus(orderId, status);
     if (data && !error) {
-      setOrders((prev) =>
-        prev.map((o) => (o._id === orderId ? { ...o, developerStatus: status } : o))
-      );
+      // Refetch orders to sync state with backend
+      await fetchOrders();
       toast.success(`Order status updated to ${status.replace("_", " ")}`);
     } else {
       toast.error(error || "Failed to update status");
@@ -63,7 +77,7 @@ const AdminOrders = () => {
   };
 
   const getStatusBadge = (status: Order["developerStatus"]) => {
-    const styles = {
+    const styles: Record<string, string> = {
       pending: "bg-yellow-500/10 text-yellow-500",
       requirements_submitted: "bg-orange-500/10 text-orange-500",
       accepted: "bg-purple-500/10 text-purple-500",
@@ -73,11 +87,19 @@ const AdminOrders = () => {
     };
 
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status]}`}>
-        {status.replace("_", " ")}
+      <span className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status || "pending"]}`}>
+        {(status || "pending").replace("_", " ")}
       </span>
     );
   };
+
+  // Filter orders by status
+  const pendingApprovalOrders = orders.filter(
+    (o) => o.developerStatus === "requirements_submitted"
+  );
+  const allOtherOrders = orders.filter(
+    (o) => o.developerStatus !== "requirements_submitted"
+  );
 
   if (authLoading || isLoading) {
     return (
@@ -99,6 +121,104 @@ const AdminOrders = () => {
           </p>
         </div>
 
+        {/* Pending Approvals Section */}
+        <Card className="border-border border-orange-500/30">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-orange-500" />
+              <CardTitle>Pending Approvals</CardTitle>
+            </div>
+            <CardDescription>
+              Orders awaiting your review and acceptance ({pendingApprovalOrders.length} orders)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {pendingApprovalOrders.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No orders pending approval
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Template</TableHead>
+                    <TableHead>Requirements</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingApprovalOrders.map((order) => {
+                    const user = typeof order.user === "object" ? order.user : null;
+                    return (
+                      <TableRow key={order._id}>
+                        <TableCell className="font-mono text-sm">
+                          #{order._id.slice(-6)}
+                        </TableCell>
+                        <TableCell>
+                          {user ? (
+                            <div>
+                              <p className="font-medium">{user.name}</p>
+                              <p className="text-xs text-muted-foreground">{user.email}</p>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">N/A</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium">{order.templateName}</TableCell>
+                        <TableCell className="max-w-[200px]">
+                          <p className="truncate text-muted-foreground" title={order.requirements}>
+                            {order.requirements || "Not submitted"}
+                          </p>
+                        </TableCell>
+                        <TableCell>₹{order.totalPrice || order.price || 0}</TableCell>
+                        <TableCell>{getStatusBadge(order.developerStatus)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleAcceptOrder(order._id)}
+                              disabled={acceptingOrderId === order._id}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              {acceptingOrderId === order._id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Check className="w-4 h-4 mr-1" />
+                                  Accept
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleStatusChange(order._id, "rejected")}
+                              className="text-red-500 border-red-500/30 hover:bg-red-500/10"
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
+                            <Button variant="ghost" size="icon" asChild>
+                              <Link to={`/admin/orders/${order._id}`}>
+                                <Eye className="w-4 h-4" />
+                              </Link>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* All Orders Table */}
         <Card className="border-border">
           <CardHeader>
             <CardTitle>All Orders</CardTitle>
@@ -119,7 +239,7 @@ const AdminOrders = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((order) => {
+                {allOtherOrders.map((order) => {
                   const user = typeof order.user === "object" ? order.user : null;
                   return (
                     <TableRow key={order._id}>
@@ -143,7 +263,7 @@ const AdminOrders = () => {
                       <TableCell className="text-muted-foreground">
                         {new Date(order.createdAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>₹{order.price}</TableCell>
+                      <TableCell>₹{order.totalPrice || order.price || 0}</TableCell>
                       <TableCell>{getStatusBadge(order.developerStatus)}</TableCell>
                       <TableCell>
                         <span
@@ -204,7 +324,7 @@ const AdminOrders = () => {
                     </TableRow>
                   );
                 })}
-                {orders.length === 0 && (
+                {allOtherOrders.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       No orders found

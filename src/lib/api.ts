@@ -192,6 +192,15 @@ export const adminUpdateOrderStatus = async (orderId: string, status: string) =>
   }
 };
 
+export const adminAcceptOrder = async (orderId: string) => {
+  try {
+    const res = await api.patch(`/admin/orders/${orderId}/accept`);
+    return { data: res.data };
+  } catch {
+    return { error: "Failed to accept order" };
+  }
+};
+
 export const adminUploadDelivery = async (orderId: string, file: File) => {
   try {
     const fd = new FormData();
