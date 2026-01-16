@@ -27,14 +27,24 @@ const AdminDashboard = () => {
     setIsLoading(true);
     setError(null);
     
-    const { data, error: apiError } = await adminGetOrders();
-    
-    if (apiError) {
-      console.error("Failed to fetch admin orders:", apiError);
-      setError(apiError);
+    try {
+      const { data, error: apiError } = await adminGetOrders();
+      
+      if (apiError) {
+        console.error("Failed to fetch admin orders:", apiError);
+        setError(apiError);
+        setOrders([]);
+      } else if (data && Array.isArray(data)) {
+        setOrders(data);
+      } else {
+        console.error("Invalid response format from admin orders API");
+        setError("Invalid response format from server");
+        setOrders([]);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching admin orders:", err);
+      setError("An unexpected error occurred");
       setOrders([]);
-    } else if (data) {
-      setOrders(data);
     }
     
     setIsLoading(false);
@@ -44,11 +54,15 @@ const AdminDashboard = () => {
     fetchOrders();
   }, [isLoggedIn, isAdmin]);
 
+  // Only calculate stats when we have valid data and no error
   const stats = error ? null : {
     total: orders.length,
-    pending: orders.filter((p) => p.developerStatus === "requirements_submitted").length,
-    inProgress: orders.filter((p) => p.developerStatus === "in_progress" || p.developerStatus === "accepted").length,
-    completed: orders.filter((p) => p.developerStatus === "completed").length,
+    inProgress: orders.filter((o) => 
+      o?.developerStatus === "in_progress" || 
+      o?.developerStatus === "accepted" ||
+      o?.developerStatus === "requirements_submitted"
+    ).length,
+    completed: orders.filter((o) => o?.developerStatus === "completed").length,
   };
 
   const statCards = stats ? [
@@ -60,16 +74,9 @@ const AdminDashboard = () => {
       bgColor: "bg-primary/10",
     },
     {
-      title: "Pending Approvals",
-      value: stats.pending,
-      icon: Clock,
-      color: "text-yellow-500",
-      bgColor: "bg-yellow-500/10",
-    },
-    {
       title: "In Progress",
       value: stats.inProgress,
-      icon: Loader2,
+      icon: Clock,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
     },
@@ -127,7 +134,7 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {statCards.map((stat) => {
             const Icon = stat.icon;
             return (
@@ -161,27 +168,27 @@ const AdminDashboard = () => {
                   className="flex items-center justify-between p-4 bg-muted/50 rounded-lg"
                 >
                   <div>
-                    <p className="font-medium text-foreground">{order.templateName}</p>
+                    <p className="font-medium text-foreground">{order?.templateName || "Unknown Template"}</p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(order.createdAt).toLocaleDateString()}
+                      {order?.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A"}
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium">₹{order.price}</span>
+                    <span className="text-sm font-medium">₹{order?.price || order?.totalPrice || 0}</span>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        order.developerStatus === "completed"
+                        order?.developerStatus === "completed"
                           ? "bg-green-500/10 text-green-500"
-                          : order.developerStatus === "in_progress"
+                          : order?.developerStatus === "in_progress"
                           ? "bg-blue-500/10 text-blue-500"
-                          : order.developerStatus === "accepted"
+                          : order?.developerStatus === "accepted"
                           ? "bg-purple-500/10 text-purple-500"
-                          : order.developerStatus === "rejected"
+                          : order?.developerStatus === "rejected"
                           ? "bg-red-500/10 text-red-500"
                           : "bg-yellow-500/10 text-yellow-500"
                       }`}
                     >
-                      {order.developerStatus.replace("_", " ")}
+                      {(order?.developerStatus || "pending").replace(/_/g, " ")}
                     </span>
                   </div>
                 </div>

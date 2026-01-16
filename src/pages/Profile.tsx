@@ -39,19 +39,26 @@ const Profile = () => {
     }
   }, [authLoading, isLoggedIn, navigate]);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      if (!isLoggedIn) return;
-      
-      setIsLoading(true);
+  const fetchOrders = async () => {
+    if (!isLoggedIn) return;
+    
+    setIsLoading(true);
+    try {
       const { data, error } = await getMyOrders();
-      if (data && !error) {
+      if (data && Array.isArray(data) && !error) {
         setOrders(data);
       } else if (error) {
+        console.error("Failed to fetch orders:", error);
         toast.error(error);
       }
-      setIsLoading(false);
-    };
+    } catch (err) {
+      console.error("Unexpected error fetching orders:", err);
+      toast.error("Failed to load orders");
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
     fetchOrders();
   }, [isLoggedIn]);
 
@@ -82,8 +89,7 @@ const Profile = () => {
 
     if (data && !error) {
       // Refresh orders after creating
-      const { data: ordersData } = await getMyOrders();
-      if (ordersData) setOrders(ordersData);
+      await fetchOrders();
       setSubmitSuccess(true);
       setWebsiteType("");
       setBusinessType("");
@@ -98,12 +104,13 @@ const Profile = () => {
   };
 
   const handleDownload = async (orderId: string, templateName: string) => {
+    const safeTemplateName = templateName || "download";
     const { data, error } = await downloadDelivery(orderId);
     if (data && !error) {
       const url = window.URL.createObjectURL(data);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${templateName.replace(/\s+/g, "-").toLowerCase()}.zip`;
+      a.download = `${safeTemplateName.replace(/\s+/g, "-").toLowerCase()}.zip`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -114,12 +121,11 @@ const Profile = () => {
     }
   };
 
-  
   const handlePayNow = async (order: Order) => {
     const orderId = order._id;
     setPayingOrderId(orderId);
 
-     const { data, error } = await createPayment(orderId);
+    const { data, error } = await createPayment(orderId);
     if (error || !data) {
       toast.error(error || "Failed to initiate payment");
       setPayingOrderId(null);
@@ -157,8 +163,7 @@ const Profile = () => {
         } else {
           toast.success("Payment successful!");
           // Refresh orders to update payment status
-          const { data: ordersData } = await getMyOrders();
-          if (ordersData) setOrders(ordersData);
+          await fetchOrders();
         }
         setPayingOrderId(null);
       },
@@ -167,6 +172,15 @@ const Profile = () => {
         setPayingOrderId(null);
       }
     );
+  };
+
+  // Helper to check if payment button should be shown
+  const shouldShowPayButton = (order: Order): boolean => {
+    const paymentStatus = order?.paymentStatus;
+    const developerStatus = order?.developerStatus;
+    
+    // Show Pay Now button if order is accepted AND payment is not completed
+    return developerStatus === "accepted" && paymentStatus !== "paid";
   };
 
   if (authLoading || isLoading) {
@@ -242,101 +256,114 @@ const Profile = () => {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order) => (
-                  <tr
-                    key={order._id}
-                    className="border-b border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <td className="py-4 px-4 text-foreground font-medium">
-                      {order.templateName}
-                    {order.isCustom && (
-                        <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                          Custom
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-4 px-4 text-foreground">
-                      ₹{(order.totalPrice || order.price || 0).toLocaleString()}
-                    </td>
-                    <td className="py-4 px-4 text-muted-foreground text-sm max-w-[200px] truncate">
-                      {order.requirements}
-                    </td>
-                    <td className="py-4 px-4 text-muted-foreground">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex justify-center">
-                        <StatusIcon
-                          status={order.status || order.developerStatus}
-                          type="icon"
-                        />
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center gap-2">
-                        {order.paymentStatus === "paid" ? (
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 rounded text-xs bg-green-500/10 text-green-600 font-medium">
-                              Paid
-                            </span>
-                            <span className="text-green-600 font-medium text-sm">
-                              ₹{(order.totalPrice || order.price || 0).toLocaleString()}
-                            </span>
-                          </div>
-                        ) : (order.developerStatus === "accepted" && order.requirements && order.requirements.trim() !== "") ? (
-                          // Show Pay Now only after admin accepts the order
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 rounded text-xs bg-yellow-500/10 text-yellow-600 font-medium">
-                              Unpaid
-                            </span>
-                            <span className="text-foreground">
-                              ₹{(order.totalPrice || order.price || 0).toLocaleString()}
-                            </span>
+                {orders.map((order) => {
+                  const orderId = order?._id || "";
+                  const templateName = order?.templateName || "Unknown Template";
+                  const price = order?.totalPrice || order?.price || 0;
+                  const requirements = order?.requirements || "";
+                  const createdAt = order?.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A";
+                  const developerStatus = order?.developerStatus || order?.status || "pending";
+                  const paymentStatus = order?.paymentStatus || "unpaid";
+                  const isCustom = order?.isCustom;
+                  const deliveryStatus = order?.deliveryStatus || order?.status;
+                  const hasDelivery = (order?.status === "completed" || order?.developerStatus === "completed") && 
+                                       (order?.downloadLink || order?.deliveryFile);
+                  
+                  return (
+                    <tr
+                      key={orderId}
+                      className="border-b border-border hover:bg-muted/50 transition-colors"
+                    >
+                      <td className="py-4 px-4 text-foreground font-medium">
+                        {templateName}
+                        {isCustom && (
+                          <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                            Custom
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4 text-foreground">
+                        ₹{price.toLocaleString()}
+                      </td>
+                      <td className="py-4 px-4 text-muted-foreground text-sm max-w-[200px] truncate">
+                        {requirements || "Not submitted"}
+                      </td>
+                      <td className="py-4 px-4 text-muted-foreground">
+                        {createdAt}
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex justify-center">
+                          <StatusIcon
+                            status={developerStatus}
+                            type="icon"
+                          />
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-2">
+                          {paymentStatus === "paid" ? (
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-1 rounded text-xs bg-green-500/10 text-green-600 font-medium">
+                                Paid
+                              </span>
+                              <span className="text-green-600 font-medium text-sm">
+                                ₹{price.toLocaleString()}
+                              </span>
+                            </div>
+                          ) : shouldShowPayButton(order) ? (
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-1 rounded text-xs bg-yellow-500/10 text-yellow-600 font-medium">
+                                Unpaid
+                              </span>
+                              <span className="text-foreground">
+                                ₹{price.toLocaleString()}
+                              </span>
+                              <Button
+                                size="sm"
+                                onClick={() => handlePayNow(order)}
+                                disabled={payingOrderId === orderId}
+                                className="gradient-cta text-white text-xs h-7"
+                              >
+                                {payingOrderId === orderId ? (
+                                  <>
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  `Pay ₹${price.toLocaleString()}`
+                                )}
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-1 rounded text-xs bg-muted text-muted-foreground">
+                                Pending
+                              </span>
+                              <span className="text-muted-foreground text-sm">
+                                ₹{price.toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex justify-center items-center gap-2">
+                          <StatusIcon status={deliveryStatus} type="dot" />
+                          {hasDelivery && (
                             <Button
                               size="sm"
-                              onClick={() => handlePayNow(order)}
-                              disabled={payingOrderId === order._id}
-                              className="gradient-cta text-white text-xs h-7"
+                              variant="ghost"
+                              onClick={() => handleDownload(orderId, templateName)}
+                              className="text-primary hover:text-primary/80"
                             >
-                              {payingOrderId === order._id ? (
-                                <>
-                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                  Processing...
-                                </>
-                              ) : (
-                                `Pay ₹${(order.totalPrice || order.price || 0).toLocaleString()}`
-                              )}
+                              <Download className="w-4 h-4" />
                             </Button>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 rounded text-xs bg-muted text-muted-foreground">
-                              Pending
-                            </span>
-                            <span className="text-muted-foreground text-sm">
-                              ₹{(order.totalPrice || order.price || 0).toLocaleString()}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex justify-center items-center gap-2">
-                        <StatusIcon status={order.status || order.deliveryStatus} type="dot" />
-                        {(order.status === "completed" || order.developerStatus === "completed") && (order.downloadLink || order.deliveryFile) && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDownload(order._id, order.templateName || "download")}
-                            className="text-primary hover:text-primary/80"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
