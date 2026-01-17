@@ -188,7 +188,7 @@ const AdminDashboard = () => {
                           : "bg-yellow-500/10 text-yellow-500"
                       }`}
                     >
-                      {(order?.developerStatus || "pending").replace(/_/g, " ")}
+                      {(order?.developerStatus ?? "unknown").replace(/_/g, " ")}
                     </span>
                   </div>
                 </div>

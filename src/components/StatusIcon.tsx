@@ -5,7 +5,7 @@ interface StatusIconProps {
   type?: "dot" | "icon";
 }
 
-const StatusIcon = ({ status = "pending", type = "dot" }: StatusIconProps) => {
+const StatusIcon = ({ status, type = "dot" }: StatusIconProps) => {
   const colorMap: Record<string, string> = {
     pending: "bg-yellow-400",
     requirements_submitted: "bg-blue-500",
@@ -59,7 +59,7 @@ const StatusIcon = ({ status = "pending", type = "dot" }: StatusIconProps) => {
         </div>
       );
     }
-    // Pending - yellow with clock
+    // Pending or unknown - yellow with clock
     return (
       <div className="w-6 h-6 rounded-full bg-yellow-400 flex items-center justify-center">
         <Clock className="w-4 h-4 text-white" />
@@ -67,7 +67,7 @@ const StatusIcon = ({ status = "pending", type = "dot" }: StatusIconProps) => {
     );
   }
 
-  return <div className={`w-3 h-3 rounded-full ${colorMap[status] || colorMap.pending}`} />;
+  return <div className={`w-3 h-3 rounded-full ${(status && colorMap[status]) || "bg-gray-400"}`} />;
 };
 
 export default StatusIcon;
