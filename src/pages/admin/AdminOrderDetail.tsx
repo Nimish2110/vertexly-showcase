@@ -73,14 +73,24 @@ const AdminOrderDetail = () => {
   }
 
   const handleStatusChange = async (status: Order["developerStatus"]) => {
+    if (!status) return;
     const { data, error } = await adminUpdateOrderStatus(order._id, status);
     if (data && !error) {
-      setOrder({ ...order, developerStatus: status });
-      toast.success(`Order status updated to ${status.replace("_", " ")}`);
+      // Use backend response as source of truth, merge with existing order data
+      setOrder(prev => prev ? { ...prev, ...data, developerStatus: data.developerStatus ?? status } : prev);
+      toast.success(`Order status updated to ${status.replace(/_/g, " ")}`);
     } else {
       toast.error(error || "Failed to update status");
     }
   };
+
+  // Get current status from backend data - never default to "pending"
+  const currentStatus = order.developerStatus ?? order.status;
+
+  // Determine which actions are available based on current status
+  const canAcceptOrReject = currentStatus === "requirements_submitted";
+  const canMarkInProgress = currentStatus === "accepted";
+  const canMarkCompleted = currentStatus === "in_progress";
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -104,29 +114,32 @@ const AdminOrderDetail = () => {
 
   const user = typeof order.user === "object" ? order.user : null;
 
+  // Build timeline based strictly on backend status - no defaults
   const statusTimeline = [
-    { status: "pending", label: "Order Placed", active: true },
+    { 
+      status: "pending", 
+      label: "Order Placed", 
+      active: !!currentStatus // Active if order exists with any status
+    },
     {
       status: "requirements_submitted",
       label: "Requirements Submitted",
-      active: ["requirements_submitted", "accepted", "in_progress", "completed"].includes(
-        order.developerStatus
-      ),
+      active: currentStatus ? ["requirements_submitted", "accepted", "in_progress", "completed"].includes(currentStatus) : false,
     },
     {
       status: "accepted",
       label: "Accepted",
-      active: ["accepted", "in_progress", "completed"].includes(order.developerStatus),
+      active: currentStatus ? ["accepted", "in_progress", "completed"].includes(currentStatus) : false,
     },
     {
       status: "in_progress",
       label: "In Progress",
-      active: ["in_progress", "completed"].includes(order.developerStatus),
+      active: currentStatus ? ["in_progress", "completed"].includes(currentStatus) : false,
     },
     {
       status: "completed",
       label: "Completed",
-      active: order.developerStatus === "completed",
+      active: currentStatus === "completed",
     },
   ];
 
@@ -307,37 +320,55 @@ const AdminOrderDetail = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Accept/Reject - only when requirements_submitted */}
                 <Button
                   className="w-full justify-start"
                   variant="outline"
-                  onClick={() => handleStatusChange("accepted")}
+                  onClick={() => canAcceptOrReject && handleStatusChange("accepted")}
+                  disabled={!canAcceptOrReject}
                 >
-                  <Check className="w-4 h-4 mr-2 text-green-500" />
+                  <Check className={`w-4 h-4 mr-2 ${canAcceptOrReject ? "text-green-500" : "text-muted-foreground"}`} />
                   Accept Order
+                  {!canAcceptOrReject && currentStatus && ["accepted", "in_progress", "completed"].includes(currentStatus) && (
+                    <span className="ml-auto text-xs text-muted-foreground">(Already accepted)</span>
+                  )}
                 </Button>
                 <Button
                   className="w-full justify-start"
                   variant="outline"
-                  onClick={() => handleStatusChange("rejected")}
+                  onClick={() => canAcceptOrReject && handleStatusChange("rejected")}
+                  disabled={!canAcceptOrReject}
                 >
-                  <X className="w-4 h-4 mr-2 text-red-500" />
+                  <X className={`w-4 h-4 mr-2 ${canAcceptOrReject ? "text-red-500" : "text-muted-foreground"}`} />
                   Reject Order
                 </Button>
+                
+                {/* Mark In Progress - only when accepted */}
                 <Button
                   className="w-full justify-start"
                   variant="outline"
-                  onClick={() => handleStatusChange("in_progress")}
+                  onClick={() => canMarkInProgress && handleStatusChange("in_progress")}
+                  disabled={!canMarkInProgress}
                 >
-                  <Loader2 className="w-4 h-4 mr-2 text-blue-500" />
+                  <Loader2 className={`w-4 h-4 mr-2 ${canMarkInProgress ? "text-blue-500" : "text-muted-foreground"}`} />
                   Mark In Progress
+                  {currentStatus === "in_progress" && (
+                    <span className="ml-auto text-xs text-muted-foreground">(Current)</span>
+                  )}
                 </Button>
+                
+                {/* Mark Completed - only when in_progress */}
                 <Button
                   className="w-full justify-start"
                   variant="outline"
-                  onClick={() => handleStatusChange("completed")}
+                  onClick={() => canMarkCompleted && handleStatusChange("completed")}
+                  disabled={!canMarkCompleted}
                 >
-                  <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                  <CheckCircle className={`w-4 h-4 mr-2 ${canMarkCompleted ? "text-green-500" : "text-muted-foreground"}`} />
                   Mark Completed
+                  {currentStatus === "completed" && (
+                    <span className="ml-auto text-xs text-muted-foreground">(Done)</span>
+                  )}
                 </Button>
               </CardContent>
             </Card>
