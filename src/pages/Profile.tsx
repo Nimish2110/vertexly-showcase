@@ -219,6 +219,23 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* Acceptance Notification Banner */}
+        {orders.some(order => order?.developerStatus === "accepted" && order?.paymentStatus !== "paid" && order?.paymentStatus !== "completed") && (
+          <div className="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-6 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <span className="text-lg">🎉</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-foreground font-medium">
+                The developer has accepted your order. Pay now to start building your website.
+              </p>
+              <p className="text-muted-foreground text-sm">
+                Complete your payment to proceed with development.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Dashboard Table */}
         <div className="bg-card rounded-2xl shadow-elegant p-6 mb-8 overflow-x-auto">
           <h3 className="text-xl font-semibold text-foreground mb-6">
@@ -248,7 +265,7 @@ const Profile = () => {
                     Developer Status
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">
-                    Payment Status
+                    Payment
                   </th>
                   <th className="text-center py-3 px-4 text-sm font-semibold text-foreground">
                     Delivery
@@ -268,6 +285,11 @@ const Profile = () => {
                   const deliveryStatus = order?.deliveryStatus ?? order?.status;
                   const hasDelivery = (order?.status === "completed" || order?.developerStatus === "completed") && 
                                        (order?.downloadLink || order?.deliveryFile);
+                  
+                  // Payment is complete
+                  const isPaid = paymentStatus === "paid" || paymentStatus === "completed";
+                  // Order accepted and awaiting payment
+                  const isAwaitingPayment = developerStatus === "accepted" && !isPaid;
                   
                   return (
                     <tr
@@ -301,7 +323,7 @@ const Profile = () => {
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
-                          {paymentStatus === "paid" || paymentStatus === "completed" ? (
+                          {isPaid ? (
                             <div className="flex items-center gap-2">
                               <span className="px-2 py-1 rounded text-xs bg-green-500/10 text-green-600 font-medium">
                                 Paid
@@ -310,19 +332,13 @@ const Profile = () => {
                                 ₹{price.toLocaleString()}
                               </span>
                             </div>
-                          ) : shouldShowPayButton(order) ? (
+                          ) : isAwaitingPayment ? (
                             <div className="flex items-center gap-2">
-                              <span className="px-2 py-1 rounded text-xs bg-yellow-500/10 text-yellow-600 font-medium">
-                                Unpaid
-                              </span>
-                              <span className="text-foreground">
-                                ₹{price.toLocaleString()}
-                              </span>
                               <Button
                                 size="sm"
                                 onClick={() => handlePayNow(order)}
                                 disabled={payingOrderId === orderId}
-                                className="gradient-cta text-white text-xs h-7"
+                                className="gradient-cta text-white text-xs h-8 px-4"
                               >
                                 {payingOrderId === orderId ? (
                                   <>
@@ -330,19 +346,14 @@ const Profile = () => {
                                     Processing...
                                   </>
                                 ) : (
-                                  `Pay ₹${price.toLocaleString()}`
+                                  `Pay Now ₹${price.toLocaleString()}`
                                 )}
                               </Button>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2">
-                              <span className="px-2 py-1 rounded text-xs bg-muted text-muted-foreground">
-                                Pending
-                              </span>
-                              <span className="text-muted-foreground text-sm">
-                                ₹{price.toLocaleString()}
-                              </span>
-                            </div>
+                            <span className="text-muted-foreground text-sm">
+                              Awaiting acceptance
+                            </span>
                           )}
                         </div>
                       </td>
