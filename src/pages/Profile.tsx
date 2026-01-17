@@ -262,10 +262,10 @@ const Profile = () => {
                   const price = order?.totalPrice || order?.price || 0;
                   const requirements = order?.requirements || "";
                   const createdAt = order?.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A";
-                  const developerStatus = order?.developerStatus || order?.status || "pending";
-                  const paymentStatus = order?.paymentStatus || "unpaid";
+                  const developerStatus = order?.developerStatus ?? order?.status;
+                  const paymentStatus = order?.paymentStatus;
                   const isCustom = order?.isCustom;
-                  const deliveryStatus = order?.deliveryStatus || order?.status;
+                  const deliveryStatus = order?.deliveryStatus ?? order?.status;
                   const hasDelivery = (order?.status === "completed" || order?.developerStatus === "completed") && 
                                        (order?.downloadLink || order?.deliveryFile);
                   
@@ -301,7 +301,7 @@ const Profile = () => {
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
-                          {paymentStatus === "paid" ? (
+                          {paymentStatus === "paid" || paymentStatus === "completed" ? (
                             <div className="flex items-center gap-2">
                               <span className="px-2 py-1 rounded text-xs bg-green-500/10 text-green-600 font-medium">
                                 Paid

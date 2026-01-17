@@ -89,12 +89,13 @@ const AdminOrders = () => {
   };
 
   const handleStatusChange = async (orderId: string, status: Order["developerStatus"]) => {
+    if (!status) return;
     try {
-      const { data, error } = await adminUpdateOrderStatus(orderId, status || "pending");
+      const { data, error } = await adminUpdateOrderStatus(orderId, status);
       if (data && !error) {
         // Refetch orders to sync state with backend
         await fetchOrders();
-        toast.success(`Order status updated to ${(status || "pending").replace(/_/g, " ")}`);
+        toast.success(`Order status updated to ${status.replace(/_/g, " ")}`);
       } else {
         toast.error(error || "Failed to update status");
       }
@@ -105,7 +106,6 @@ const AdminOrders = () => {
   };
 
   const getStatusBadge = (status: Order["developerStatus"]) => {
-    const safeStatus = status || "pending";
     const styles: Record<string, string> = {
       pending: "bg-yellow-500/10 text-yellow-500",
       requirements_submitted: "bg-orange-500/10 text-orange-500",
@@ -115,9 +115,10 @@ const AdminOrders = () => {
       completed: "bg-green-500/10 text-green-500",
     };
 
+    const displayStatus = status ?? "unknown";
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-medium ${styles[safeStatus] || styles.pending}`}>
-        {safeStatus.replace(/_/g, " ")}
+      <span className={`px-3 py-1 rounded-full text-xs font-medium ${styles[displayStatus] || "bg-gray-500/10 text-gray-500"}`}>
+        {displayStatus.replace(/_/g, " ")}
       </span>
     );
   };
