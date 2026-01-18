@@ -429,7 +429,7 @@ export const templates: Template[] = [
     rating: 4.9,
     reviews: 198,
     price: 7500,
-    previewUrl: "/templates/furn-master/index.html",
+    previewUrl: "/templates/furn master/index.html",
     downloadUrl: "",
   },
 ];
