@@ -289,7 +289,7 @@ export const templates: Template[] = [
     downloadUrl: "",
   },
   {
-    id: "courier",
+    id: "Courier",
     image: "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=500&auto=format",
     category: "Logistics",
     title: "Courier Express",
