@@ -385,7 +385,7 @@ export const templates: Template[] = [
     downloadUrl: "",
   },
   {
-    id: "esscence",
+    id: "Essence",
     image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&auto=format",
     category: "Beauty & Cosmetics",
     title: "Esscence Beauty",
@@ -393,7 +393,7 @@ export const templates: Template[] = [
     rating: 4.9,
     reviews: 267,
     price: 7500,
-    previewUrl: "/templates/Esscence/index.html",
+    previewUrl: "/templates/Essence/index.html",
     downloadUrl: "",
   },
   {
@@ -409,7 +409,7 @@ export const templates: Template[] = [
     downloadUrl: "",
   },
   {
-    id: "footwear-master",
+    id: "Footwear Master",
     image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format",
     category: "E-commerce",
     title: "Footwear Master",
