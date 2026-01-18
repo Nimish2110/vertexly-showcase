@@ -297,7 +297,7 @@ export const templates: Template[] = [
     rating: 4.6,
     reviews: 145,
     price: 6000,
-    previewUrl: "/templates/Courier/index.html",
+    previewUrl: "/templates/Courier/public/index.html",
     downloadUrl: "",
   },
   {
