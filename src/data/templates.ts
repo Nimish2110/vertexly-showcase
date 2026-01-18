@@ -417,7 +417,7 @@ export const templates: Template[] = [
     rating: 4.8,
     reviews: 223,
     price: 7000,
-    previewUrl: "/templates/footwear-master/index.html",
+    previewUrl: "/templates/Footwear Master/index.html",
     downloadUrl: "",
   },
   {
