@@ -421,7 +421,7 @@ export const templates: Template[] = [
     downloadUrl: "",
   },
   {
-    id: "furn-master",
+    id: "furn master",
     image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&auto=format",
     category: "E-commerce",
     title: "Furn Master",
