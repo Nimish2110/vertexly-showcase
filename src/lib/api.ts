@@ -220,7 +220,18 @@ export const adminUploadDelivery = async (orderId: string, file: File) => {
 export const adminGetUsers = async () => {
   try {
     const res = await api.get("/admin/users");
-    return { data: res.data };
+    
+    // Normalize response: handle both array and object with users property
+    let users: User[];
+    if (Array.isArray(res.data)) {
+      users = res.data;
+    } else if (res.data && Array.isArray(res.data.users)) {
+      users = res.data.users;
+    } else {
+      users = [];
+    }
+    
+    return { data: users };
   } catch {
     return { error: "Failed to load users" };
   }
