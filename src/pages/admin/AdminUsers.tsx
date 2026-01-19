@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, RotateCcw, UserCircle, Loader2 } from "lucide-react";
+import { Trash2, RotateCcw, UserCircle, Loader2, AlertCircle, RefreshCw, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminUsers = () => {
@@ -21,6 +21,7 @@ const AdminUsers = () => {
   const { isLoggedIn, isAdmin, isLoading: authLoading } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && (!isLoggedIn || !isAdmin())) {
@@ -28,19 +29,36 @@ const AdminUsers = () => {
     }
   }, [isLoggedIn, isAdmin, authLoading, navigate]);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (!isLoggedIn || !isAdmin()) return;
+  const fetchUsers = async () => {
+    if (!isLoggedIn || !isAdmin()) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error: apiError } = await adminGetUsers();
       
-      setIsLoading(true);
-      const { data, error } = await adminGetUsers();
-      if (data && !error) {
+      if (apiError) {
+        console.error("Failed to fetch users:", apiError);
+        setError(apiError);
+        setUsers([]);
+      } else if (data && Array.isArray(data)) {
         setUsers(data);
-      } else if (error) {
-        toast.error(error);
+      } else {
+        console.error("Invalid response format from users API");
+        setError("Invalid response format from server");
+        setUsers([]);
       }
-      setIsLoading(false);
-    };
+    } catch (err) {
+      console.error("Unexpected error fetching users:", err);
+      setError("An unexpected error occurred");
+      setUsers([]);
+    }
+    
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, [isLoggedIn, isAdmin]);
 
@@ -48,7 +66,7 @@ const AdminUsers = () => {
     const { data, error } = await adminDeleteUser(userId);
     if (data && !error) {
       setUsers((prev) =>
-        prev.map((u) => (u._id === userId ? { ...u, status: "deleted" } : u))
+        prev.map((u) => (u?._id === userId ? { ...u, status: "deleted" } : u))
       );
       toast.success("User has been soft deleted");
     } else {
@@ -60,7 +78,7 @@ const AdminUsers = () => {
     const { data, error } = await adminRestoreUser(userId);
     if (data && !error) {
       setUsers((prev) =>
-        prev.map((u) => (u._id === userId ? { ...u, status: "active" } : u))
+        prev.map((u) => (u?._id === userId ? { ...u, status: "active" } : u))
       );
       toast.success("User has been restored");
     } else {
@@ -78,8 +96,42 @@ const AdminUsers = () => {
     );
   }
 
-  const activeUsers = users.filter((u) => u.status === "active").length;
-  const deletedUsers = users.filter((u) => u.status === "deleted").length;
+  // Error state with retry button
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="space-y-8">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">User Management</h1>
+            <p className="text-muted-foreground mt-1">
+              View and manage all registered users
+            </p>
+          </div>
+          
+          <Card className="border-border">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Failed to Load Users
+              </h3>
+              <p className="text-muted-foreground text-center mb-6 max-w-md">
+                {error}
+              </p>
+              <Button onClick={fetchUsers} className="gap-2">
+                <RefreshCw className="w-4 h-4" />
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  // Safe array operations with defensive checks
+  const safeUsers = Array.isArray(users) ? users : [];
+  const activeUsers = safeUsers.filter((u) => u?.status === "active").length;
+  const deletedUsers = safeUsers.filter((u) => u?.status === "deleted").length;
 
   return (
     <AdminLayout>
@@ -99,7 +151,7 @@ const AdminUsers = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-foreground">{users.length}</div>
+              <div className="text-3xl font-bold text-foreground">{safeUsers.length}</div>
             </CardContent>
           </Card>
           <Card className="border-border">
@@ -129,92 +181,100 @@ const AdminUsers = () => {
             <CardTitle>All Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user._id} className={user.status === "deleted" ? "opacity-50" : ""}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                          <UserCircle className="w-5 h-5 text-primary" />
-                        </div>
-                        <span className="font-medium">{user.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          user.role === "admin"
-                            ? "bg-purple-500/10 text-purple-500"
-                            : "bg-blue-500/10 text-blue-500"
-                        }`}
-                      >
-                        {user.role}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          user.status === "active"
-                            ? "bg-green-500/10 text-green-500"
-                            : "bg-red-500/10 text-red-500"
-                        }`}
-                      >
-                        {user.status || "active"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {user.createdAt
-                        ? new Date(user.createdAt).toLocaleDateString()
-                        : "N/A"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {user.role !== "admin" && (
-                        <>
-                          {user.status !== "deleted" ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleSoftDelete(user._id)}
-                              className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRestore(user._id)}
-                              className="text-green-500 hover:text-green-600 hover:bg-green-500/10"
-                            >
-                              <RotateCcw className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {users.length === 0 && (
+            {safeUsers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Users className="w-12 h-12 text-muted-foreground/50 mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No Users Found</h3>
+                <p className="text-muted-foreground text-center max-w-md">
+                  There are no registered users yet. Users will appear here once they sign up.
+                </p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No users found
-                    </TableCell>
+                    <TableHead>User</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {safeUsers.map((user) => (
+                    <TableRow 
+                      key={user?._id || Math.random().toString()} 
+                      className={user?.status === "deleted" ? "opacity-50" : ""}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <UserCircle className="w-5 h-5 text-primary" />
+                          </div>
+                          <span className="font-medium">{user?.name || "—"}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {user?.email || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${
+                            user?.role === "admin"
+                              ? "bg-purple-500/10 text-purple-500"
+                              : "bg-blue-500/10 text-blue-500"
+                          }`}
+                        >
+                          {user?.role || "user"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${
+                            user?.status === "active"
+                              ? "bg-green-500/10 text-green-500"
+                              : "bg-red-500/10 text-red-500"
+                          }`}
+                        >
+                          {user?.status || "active"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {user?.createdAt
+                          ? new Date(user.createdAt).toLocaleDateString()
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {user?.role !== "admin" && user?._id && (
+                          <>
+                            {user?.status !== "deleted" ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSoftDelete(user._id)}
+                                className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRestore(user._id)}
+                                className="text-green-500 hover:text-green-600 hover:bg-green-500/10"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
