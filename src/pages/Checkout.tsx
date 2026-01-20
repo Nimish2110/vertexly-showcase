@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { createOrder, submitRequirements } from "@/lib/api";
+import { templates as templatesData } from "@/data/templates";
 
 interface Template {
   id: string;
@@ -18,288 +19,18 @@ interface Template {
   price: number;
 }
 
-const templates: Record<string, Template> = {
-  zay: {
-    id: "zay",
-    image: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=500&auto=format",
-    category: "E-commerce",
-    title: "Zay Ecommerce",
-    description: "A modern, fully responsive e-commerce template.",
-    price: 5000,
-  },
-  motora: {
-    id: "motora",
-    image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=500&auto=format",
-    category: "Automotive",
-    title: "Motora Car Service",
-    description: "Professional automotive template.",
-    price: 6000,
-  },
-  famms: {
-    id: "famms",
-    image: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=500&auto=format",
-    category: "Fashion & Retail",
-    title: "Famms Fashion Store",
-    description: "Modern fashion storefront template.",
-    price: 6500,
-  },
-  podtalk: {
-    id: "podtalk",
-    image: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=500&auto=format",
-    category: "Media & Podcast",
-    title: "Pod Talk Podcast",
-    description: "Podcast template with audio integration.",
-    price: 7000,
-  },
-  glossytouch: {
-    id: "glossytouch",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&auto=format",
-    category: "Creative Portfolio",
-    title: "Glossy Touch Portfolio",
-    description: "Portfolio for creative professionals.",
-    price: 7500,
-  },
-  urotaxi: {
-    id: "urotaxi",
-    image: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=500&auto=format",
-    category: "Transportation",
-    title: "UroTaxi Service",
-    description: "Taxi and transport service template.",
-    price: 8000,
-  },
-  petsitting: {
-    id: "petsitting",
-    image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=500&auto=format",
-    category: "Pet Services",
-    title: "Pet Sitting Pro",
-    description: "Professional pet sitting service template.",
-    price: 5500,
-  },
-  anipat: {
-    id: "anipat",
-    image: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=500&auto=format",
-    category: "Pet Services",
-    title: "AniPat Pet Care",
-    description: "Modern pet care and veterinary template.",
-    price: 6000,
-  },
-  petcare: {
-    id: "petcare",
-    image: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=500&auto=format",
-    category: "Pet Services",
-    title: "PetCare Plus",
-    description: "Comprehensive pet care service template.",
-    price: 5800,
-  },
-  bustraveller: {
-    id: "bustraveller",
-    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&auto=format",
-    category: "Travel",
-    title: "Bus Traveller",
-    description: "Bus travel and tour booking template.",
-    price: 6500,
-  },
-  mosaic: {
-    id: "mosaic",
-    image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=500&auto=format",
-    category: "Construction",
-    title: "Mosaic Construction",
-    description: "Professional construction company template.",
-    price: 7000,
-  },
-  archlab: {
-    id: "archlab",
-    image: "https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=500&auto=format",
-    category: "Architecture",
-    title: "ArchLab Studio",
-    description: "Elegant architecture studio template.",
-    price: 7500,
-  },
-  "ashion-master": {
-    id: "ashion-master",
-    image: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=500&auto=format",
-    category: "E-commerce",
-    title: "Ashion Master Store",
-    description: "Premium fashion e-commerce template.",
-    price: 6500,
-  },
-  eventcon: {
-    id: "eventcon",
-    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&auto=format",
-    category: "Events",
-    title: "EventCon Conference",
-    description: "Event and conference template.",
-    price: 7000,
-  },
-  foodmart: {
-    id: "foodmart",
-    image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format",
-    category: "Wholesale",
-    title: "FoodMart Wholesale",
-    description: "Wholesale and grocery store template.",
-    price: 6000,
-  },
-  rentu: {
-    id: "rentu",
-    image: "https://images.unsplash.com/photo-1485291571150-772bcfc10da5?w=500&auto=format",
-    category: "Car Rental",
-    title: "RentU Car Rental",
-    description: "Car rental and vehicle leasing template.",
-    price: 7500,
-  },
-  accounting: {
-    id: "accounting",
-    image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=500&auto=format",
-    category: "Finance",
-    title: "Accounting Pro",
-    description: "Professional accounting and financial services template.",
-    price: 6500,
-  },
-  acuas: {
-    id: "acuas",
-    image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500&auto=format",
-    category: "Aquatics",
-    title: "Acuas Aquarium",
-    description: "Beautiful aquarium and aquatic life template.",
-    price: 5500,
-  },
-  aranoz: {
-    id: "aranoz",
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&auto=format",
-    category: "E-commerce",
-    title: "Aranoz Furniture",
-    description: "Elegant furniture e-commerce template.",
-    price: 7000,
-  },
-  archi: {
-    id: "archi",
-    image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=500&auto=format",
-    category: "Architecture",
-    title: "Archi Design Studio",
-    description: "Modern architecture and interior design template.",
-    price: 7500,
-  },
-  asthetic: {
-    id: "asthetic",
-    image: "https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=500&auto=format",
-    category: "Beauty & Wellness",
-    title: "Asthetic Clinic",
-    description: "Premium aesthetic and beauty clinic template.",
-    price: 8000,
-  },
-  brber: {
-    id: "brber",
-    image: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&auto=format",
-    category: "Barber & Salon",
-    title: "Brber Barbershop",
-    description: "Stylish barbershop template.",
-    price: 5500,
-  },
-  coffee: {
-    id: "coffee",
-    image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500&auto=format",
-    category: "Food & Beverage",
-    title: "Coffee House",
-    description: "Warm and inviting coffee shop template.",
-    price: 5000,
-  },
-  courier: {
-    id: "courier",
-    image: "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=500&auto=format",
-    category: "Logistics",
-    title: "Courier Express",
-    description: "Professional courier and delivery service template.",
-    price: 6000,
-  },
-  cyborg: {
-    id: "cyborg",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=500&auto=format",
-    category: "Technology",
-    title: "Cyborg Tech",
-    description: "Futuristic technology and AI company template.",
-    price: 8500,
-  },
-  organic: {
-    id: "organic",
-    image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format",
-    category: "Organic & Health",
-    title: "Organic Market",
-    description: "Fresh organic food and health products template.",
-    price: 6500,
-  },
-  cycle: {
-    id: "cycle",
-    image: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=500&auto=format",
-    category: "Sports & Fitness",
-    title: "Cycle Shop",
-    description: "Modern bicycle and cycling gear store template.",
-    price: 6000,
-  },
-  dentcare: {
-    id: "dentcare",
-    image: "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=500&auto=format",
-    category: "Healthcare",
-    title: "DentCare Clinic",
-    description: "Professional dental clinic template.",
-    price: 7000,
-  },
-  edumark: {
-    id: "edumark",
-    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&auto=format",
-    category: "Education",
-    title: "EduMark Academy",
-    description: "Modern education and learning platform template.",
-    price: 6500,
-  },
-  eduwell: {
-    id: "eduwell",
-    image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=500&auto=format",
-    category: "Education",
-    title: "EduWell Institute",
-    description: "Comprehensive educational institute template.",
-    price: 7000,
-  },
-  esier: {
-    id: "esier",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&auto=format",
-    category: "Business",
-    title: "Esier Business",
-    description: "Clean and professional business template.",
-    price: 5500,
-  },
-  esscence: {
-    id: "esscence",
-    image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500&auto=format",
-    category: "Beauty & Cosmetics",
-    title: "Esscence Beauty",
-    description: "Elegant beauty and cosmetics store template.",
-    price: 7500,
-  },
-  faster: {
-    id: "faster",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&auto=format",
-    category: "Logistics",
-    title: "Faster Delivery",
-    description: "Fast delivery and shipping service template.",
-    price: 6000,
-  },
-  "footwear-master": {
-    id: "footwear-master",
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&auto=format",
-    category: "E-commerce",
-    title: "Footwear Master",
-    description: "Premium footwear and shoe store template.",
-    price: 7000,
-  },
-  "furn-master": {
-    id: "furn-master",
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&auto=format",
-    category: "E-commerce",
-    title: "Furn Master",
-    description: "Stylish furniture store template.",
-    price: 7500,
-  },
-};
+// Build lookup from centralized data
+const templates: Record<string, Template> = templatesData.reduce((acc, t) => {
+  acc[t.id] = {
+    id: t.id,
+    image: t.image,
+    category: t.category,
+    title: t.title,
+    description: t.description,
+    price: t.price,
+  };
+  return acc;
+}, {} as Record<string, Template>);
 
 const Checkout = () => {
   const { templateId } = useParams<{ templateId: string }>();
@@ -499,18 +230,31 @@ const Checkout = () => {
                 </p>
                 <Link
                   to="/profile"
-                  className="text-primary underline text-sm mt-2 inline-block"
+                  className="text-primary underline mt-2 inline-block"
                 >
-                  Go to Profile →
+                  View in Profile →
                 </Link>
               </div>
             )}
           </div>
         )}
 
-        <Link to="/templates" className="text-sm underline">
-          ← Back to Templates
-        </Link>
+        {/* --- PAYMENT SECTION (Coming Soon) --- */}
+        <div className="bg-card p-6 rounded-xl shadow">
+          <h3 className="text-xl font-bold mb-4">Payment</h3>
+          <p className="text-muted-foreground mb-4">
+            Payment gateway coming soon. After submitting requirements, our team will contact you.
+          </p>
+          <Button disabled className="w-full opacity-50">
+            Pay Now (Coming Soon)
+          </Button>
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link to="/" className="text-primary hover:underline">
+            ← Back to Home
+          </Link>
+        </div>
       </div>
     </div>
   );

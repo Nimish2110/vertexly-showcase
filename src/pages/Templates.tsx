@@ -1,11 +1,58 @@
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Puzzle } from "lucide-react";
+import { Puzzle, Filter, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import TemplateCard from "@/components/TemplateCard";
 import { templates } from "@/data/templates";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
+const filterOptions = [
+  { label: "All", value: "All" },
+  { label: "Business Templates", value: "Business" },
+  { label: "Portfolio Templates", value: "Portfolio" },
+  { label: "E-commerce Templates", value: "E-commerce" },
+  { label: "Landing Pages", value: "Landing" },
+  { label: "Blog Templates", value: "Blog" },
+];
 
 const Templates = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialCategory = searchParams.get("category") || "All";
+  const [selectedFilter, setSelectedFilter] = useState(initialCategory);
+
+  // Update filter when URL param changes
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      setSelectedFilter(categoryParam);
+    }
+  }, [searchParams]);
+
+  const handleFilterChange = (value: string) => {
+    setSelectedFilter(value);
+    if (value === "All") {
+      setSearchParams({});
+    } else {
+      setSearchParams({ category: value });
+    }
+  };
+
+  const filteredTemplates = useMemo(() => {
+    if (selectedFilter === "All") {
+      return templates;
+    }
+    return templates.filter((template) => template.category === selectedFilter);
+  }, [selectedFilter]);
+
+  const currentFilterLabel = filterOptions.find(f => f.value === selectedFilter)?.label || "All";
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -39,8 +86,32 @@ const Templates = () => {
             </div>
           </div>
 
+          {/* Filter Dropdown */}
+          <div className="flex justify-end mb-8">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2 bg-card border-border">
+                  <Filter className="w-4 h-4" />
+                  {currentFilterLabel}
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-card border-border z-50">
+                {filterOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onClick={() => handleFilterChange(option.value)}
+                    className={`cursor-pointer ${selectedFilter === option.value ? "bg-primary/10 text-primary" : ""}`}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            {templates.map((template, index) => (
+            {filteredTemplates.map((template, index) => (
               <TemplateCard
                 key={template.id}
                 {...template}
@@ -48,6 +119,12 @@ const Templates = () => {
               />
             ))}
           </div>
+
+          {filteredTemplates.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground text-lg">No templates found in this category.</p>
+            </div>
+          )}
 
           {/* Feature Cards */}
           <div className="grid md:grid-cols-3 gap-8 mt-20">
