@@ -1,15 +1,18 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BookOpen, Facebook, Instagram, Twitter } from "lucide-react";
 
 const Footer = () => {
+  const navigate = useNavigate();
+
+  const templateCategories = [
+    { label: "Business Templates", filter: "Business" },
+    { label: "Portfolio Templates", filter: "Portfolio" },
+    { label: "E-commerce Templates", filter: "E-commerce" },
+    { label: "Landing Pages", filter: "Landing" },
+    { label: "Blog Templates", filter: "Blog" },
+  ];
+
   const footerLinks = {
-    templates: [
-      "Business Templates",
-      "Portfolio Templates",
-      "E-commerce Templates",
-      "Landing Pages",
-      "Blog Templates",
-    ],
     support: [
       "FAQs",
       "Documentation",
@@ -24,6 +27,10 @@ const Footer = () => {
       "Privacy Policy",
       "Contact Us",
     ],
+  };
+
+  const handleCategoryClick = (filter: string) => {
+    navigate(`/templates?category=${encodeURIComponent(filter)}`);
   };
 
   return (
@@ -66,16 +73,14 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Templates</h3>
             <ul className="space-y-2">
-              {footerLinks.templates.map((link) => (
-                <li key={link}>
-                  <a
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    aria-disabled="true"
-                    className="text-white/70 hover:text-white/70 transition-colors duration-200 text-sm cursor-not-allowed opacity-60"
+              {templateCategories.map(({ label, filter }) => (
+                <li key={label}>
+                  <button
+                    onClick={() => handleCategoryClick(filter)}
+                    className="text-white/70 hover:text-white transition-colors duration-200 text-sm cursor-pointer text-left"
                   >
-                    {link}
-                  </a>
+                    {label}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -132,7 +137,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="pt-8 border-t border-white/10 text-center">
           <p className="text-white/60 text-sm">
-            Copyright ©2025 All rights reserved by vertexly.in
+            Copyright ©2025 All rights reserved by Vertexly
           </p>
         </div>
       </div>
