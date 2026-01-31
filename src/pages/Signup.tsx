@@ -9,15 +9,15 @@ import { Label } from "@/components/ui/label";
 const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [mobile, setMobile] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({ name: "", email: "", mobile: "", password: "" });
+  const [errors, setErrors] = useState({ name: "", email: "", phone: "", password: "", general: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState("");
   const navigate = useNavigate();
   const { register } = useAuth();
 
-  const formatMobileNumber = (value: string): string => {
+  const formatPhoneNumber = (value: string): string => {
     // Remove all non-digit characters except +
     let cleaned = value.replace(/[^\d+]/g, "");
     
@@ -31,8 +31,13 @@ const Signup = () => {
     return cleaned;
   };
 
-  const validateMobile = (value: string): boolean => {
-    if (!value) return true; // Mobile is optional
+  const isValidEmail = (value: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value);
+  };
+
+  const isValidPhone = (value: string): boolean => {
+    if (!value) return false;
     
     // Remove country code for validation
     let digits = value.replace(/\D/g, "");
@@ -46,26 +51,45 @@ const Signup = () => {
     return digits.length === 10;
   };
 
+  const formatPhoneForApi = (value: string): string => {
+    let digits = value.replace(/\D/g, "");
+    
+    // If starts with 91 and has more than 10 digits
+    if (digits.startsWith("91") && digits.length > 10) {
+      return "+" + digits;
+    }
+    
+    // If 10 digits, add +91
+    if (digits.length === 10) {
+      return "+91" + digits;
+    }
+    
+    return value.startsWith("+") ? value : "+91" + digits;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    const newErrors = { name: "", email: "", mobile: "", password: "" };
+    const newErrors = { name: "", email: "", phone: "", password: "", general: "" };
 
     if (!name) {
       newErrors.name = "Name is required";
     }
 
-    if (!email) {
-      newErrors.email = "Email is required";
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        newErrors.email = "Please enter a valid email address";
-      }
+    // Either email or phone is required
+    const hasEmail = email.trim().length > 0;
+    const hasPhone = phone.trim().length > 0;
+
+    if (!hasEmail && !hasPhone) {
+      newErrors.general = "Please provide either an email address or mobile number";
     }
 
-    if (mobile && !validateMobile(mobile)) {
-      newErrors.mobile = "Please enter a valid 10-digit mobile number";
+    if (hasEmail && !isValidEmail(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (hasPhone && !isValidPhone(phone)) {
+      newErrors.phone = "Please enter a valid 10-digit mobile number";
     }
 
     if (!password) {
@@ -77,23 +101,16 @@ const Signup = () => {
     setErrors(newErrors);
     setApiError("");
 
-    if (!newErrors.name && !newErrors.email && !newErrors.mobile && !newErrors.password) {
+    const hasErrors = Object.values(newErrors).some(err => err !== "");
+    
+    if (!hasErrors) {
       setIsLoading(true);
       try {
-        // Format mobile number with +91 if provided without country code
-        let formattedMobile = "";
-        if (mobile) {
-          let digits = mobile.replace(/\D/g, "");
-          if (digits.startsWith("91") && digits.length > 10) {
-            formattedMobile = "+" + digits;
-          } else if (digits.length === 10) {
-            formattedMobile = "+91" + digits;
-          } else {
-            formattedMobile = mobile.startsWith("+") ? mobile : "+91" + digits;
-          }
-        }
+        // Format phone number with +91 if provided
+        const formattedPhone = hasPhone ? formatPhoneForApi(phone) : undefined;
+        const formattedEmail = hasEmail ? email : undefined;
         
-        const { success, error } = await register(name, email, password, formattedMobile || undefined);
+        const { success, error } = await register(name, password, formattedEmail, formattedPhone);
         if (success) {
           navigate("/");
         } else {
@@ -127,7 +144,7 @@ const Signup = () => {
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
-                  setErrors({ ...errors, name: "" });
+                  setErrors({ ...errors, name: "", general: "" });
                 }}
                 className={errors.name ? "border-destructive" : ""}
                 autoComplete="off"
@@ -141,7 +158,7 @@ const Signup = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">Email address <span className="text-muted-foreground text-xs">(optional if phone provided)</span></Label>
               <Input
                 id="email"
                 type="email"
@@ -150,7 +167,7 @@ const Signup = () => {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  setErrors({ ...errors, email: "" });
+                  setErrors({ ...errors, email: "", general: "" });
                 }}
                 className={errors.email ? "border-destructive" : ""}
                 autoComplete="off"
@@ -164,18 +181,18 @@ const Signup = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mobile">Mobile Number <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Label htmlFor="phone">Mobile Number <span className="text-muted-foreground text-xs">(optional if email provided)</span></Label>
               <Input
-                id="mobile"
+                id="phone"
                 type="tel"
-                name="signup-mobile-field"
+                name="signup-phone-field"
                 placeholder="Enter mobile number"
-                value={mobile}
+                value={phone}
                 onChange={(e) => {
-                  setMobile(formatMobileNumber(e.target.value));
-                  setErrors({ ...errors, mobile: "" });
+                  setPhone(formatPhoneNumber(e.target.value));
+                  setErrors({ ...errors, phone: "", general: "" });
                 }}
-                className={errors.mobile ? "border-destructive" : ""}
+                className={errors.phone ? "border-destructive" : ""}
                 autoComplete="off"
                 autoCorrect="off"
                 autoCapitalize="off"
@@ -183,9 +200,10 @@ const Signup = () => {
                 data-form-type="other"
                 data-lpignore="true"
               />
-              
-              {errors.mobile && <p className="text-sm text-destructive">{errors.mobile}</p>}
+              {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
             </div>
+
+            {errors.general && <p className="text-sm text-destructive">{errors.general}</p>}
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
