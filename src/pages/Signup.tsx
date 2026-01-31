@@ -9,17 +9,47 @@ import { Label } from "@/components/ui/label";
 const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({ name: "", email: "", password: "" });
+  const [errors, setErrors] = useState({ name: "", email: "", mobile: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState("");
   const navigate = useNavigate();
   const { register } = useAuth();
 
+  const formatMobileNumber = (value: string): string => {
+    // Remove all non-digit characters except +
+    let cleaned = value.replace(/[^\d+]/g, "");
+    
+    // If starts with +, keep it, otherwise allow digits only
+    if (cleaned.startsWith("+")) {
+      cleaned = "+" + cleaned.slice(1).replace(/\D/g, "");
+    } else {
+      cleaned = cleaned.replace(/\D/g, "");
+    }
+    
+    return cleaned;
+  };
+
+  const validateMobile = (value: string): boolean => {
+    if (!value) return true; // Mobile is optional
+    
+    // Remove country code for validation
+    let digits = value.replace(/\D/g, "");
+    
+    // If starts with 91 and has more than 10 digits, remove 91
+    if (digits.startsWith("91") && digits.length > 10) {
+      digits = digits.slice(2);
+    }
+    
+    // Should be exactly 10 digits
+    return digits.length === 10;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    const newErrors = { name: "", email: "", password: "" };
+    const newErrors = { name: "", email: "", mobile: "", password: "" };
 
     if (!name) {
       newErrors.name = "Name is required";
@@ -34,6 +64,10 @@ const Signup = () => {
       }
     }
 
+    if (mobile && !validateMobile(mobile)) {
+      newErrors.mobile = "Please enter a valid 10-digit mobile number";
+    }
+
     if (!password) {
       newErrors.password = "Password is required";
     } else if (password.length < 8) {
@@ -43,10 +77,23 @@ const Signup = () => {
     setErrors(newErrors);
     setApiError("");
 
-    if (!newErrors.name && !newErrors.email && !newErrors.password) {
+    if (!newErrors.name && !newErrors.email && !newErrors.mobile && !newErrors.password) {
       setIsLoading(true);
       try {
-        const { success, error } = await register(name, email, password);
+        // Format mobile number with +91 if provided without country code
+        let formattedMobile = "";
+        if (mobile) {
+          let digits = mobile.replace(/\D/g, "");
+          if (digits.startsWith("91") && digits.length > 10) {
+            formattedMobile = "+" + digits;
+          } else if (digits.length === 10) {
+            formattedMobile = "+91" + digits;
+          } else {
+            formattedMobile = mobile.startsWith("+") ? mobile : "+91" + digits;
+          }
+        }
+        
+        const { success, error } = await register(name, email, password, formattedMobile || undefined);
         if (success) {
           navigate("/");
         } else {
@@ -114,6 +161,30 @@ const Signup = () => {
                 data-lpignore="true"
               />
               {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="mobile">Mobile Number <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input
+                id="mobile"
+                type="tel"
+                name="signup-mobile-field"
+                placeholder="Enter mobile number (e.g., 9876543210)"
+                value={mobile}
+                onChange={(e) => {
+                  setMobile(formatMobileNumber(e.target.value));
+                  setErrors({ ...errors, mobile: "" });
+                }}
+                className={errors.mobile ? "border-destructive" : ""}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
+                data-form-type="other"
+                data-lpignore="true"
+              />
+              <p className="text-xs text-muted-foreground">Country code optional, defaults to +91</p>
+              {errors.mobile && <p className="text-sm text-destructive">{errors.mobile}</p>}
             </div>
 
             <div className="space-y-2">
