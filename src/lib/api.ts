@@ -7,8 +7,8 @@ const TOKEN_KEY = "vertexly_token";
 export interface User {
   _id: string;
   name: string;
-  email: string;
-  mobile?: string;
+  email?: string;
+  phone?: string;
   role: string;
   status?: string;
   isDeleted?: boolean;
@@ -66,11 +66,14 @@ export const getToken = () => {
 };
 
 // ========== AUTH ==========
-export const registerUser = async (name: string, email: string, password: string, mobile?: string) => {
+export const registerUser = async (name: string, password: string, email?: string, phone?: string) => {
   try {
-    const payload: { name: string; email: string; password: string; mobile?: string } = { name, email, password };
-    if (mobile) {
-      payload.mobile = mobile;
+    const payload: { name: string; password: string; email?: string; phone?: string } = { name, password };
+    if (email) {
+      payload.email = email;
+    }
+    if (phone) {
+      payload.phone = phone;
     }
     const res = await api.post("/auth/register", payload);
     saveToken(res.data.token);
@@ -82,13 +85,8 @@ export const registerUser = async (name: string, email: string, password: string
 
 export const loginUser = async (identifier: string, password: string) => {
   try {
-    // Determine if identifier is email or mobile number
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const isEmail = emailRegex.test(identifier);
-    
-    const payload = isEmail 
-      ? { email: identifier, password } 
-      : { mobile: identifier, password };
+    // Send identifier as emailOrPhone - backend handles detection
+    const payload = { emailOrPhone: identifier, password };
     
     const res = await api.post("/auth/login", payload);
     saveToken(res.data.token);

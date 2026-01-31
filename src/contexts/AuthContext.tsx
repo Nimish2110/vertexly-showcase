@@ -15,7 +15,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   login: (identifier: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (name: string, email: string, password: string, mobile?: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, password: string, email?: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isAdmin: () => boolean;
   refreshUser: () => Promise<void>;
@@ -56,8 +56,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { success: false, error };
   };
 
-  const register = async (name: string, email: string, password: string, mobile?: string): Promise<{ success: boolean; error?: string }> => {
-    const { data, error } = await registerUser(name, email, password, mobile);
+  const register = async (name: string, password: string, email?: string, phone?: string): Promise<{ success: boolean; error?: string }> => {
+    const { data, error } = await registerUser(name, password, email, phone);
     if (data && !error) {
       setUser(data.user);
       setIsLoggedIn(true);
