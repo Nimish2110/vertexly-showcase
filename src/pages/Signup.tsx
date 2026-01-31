@@ -169,7 +169,7 @@ const Signup = () => {
                 id="mobile"
                 type="tel"
                 name="signup-mobile-field"
-                placeholder="Enter mobile number (e.g., 9876543210)"
+                placeholder="Enter mobile number"
                 value={mobile}
                 onChange={(e) => {
                   setMobile(formatMobileNumber(e.target.value));
@@ -183,7 +183,7 @@ const Signup = () => {
                 data-form-type="other"
                 data-lpignore="true"
               />
-              <p className="text-xs text-muted-foreground">Country code optional, defaults to +91</p>
+              
               {errors.mobile && <p className="text-sm text-destructive">{errors.mobile}</p>}
             </div>
 
