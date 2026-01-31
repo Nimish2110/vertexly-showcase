@@ -7,18 +7,56 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const isValidEmail = (value: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value);
+  };
+
+  const isValidMobile = (value: string): boolean => {
+    // Remove all non-digit characters
+    const digits = value.replace(/\D/g, "");
+    
+    // Check if it's a valid Indian mobile (10 digits or 12 with 91 prefix)
+    if (digits.length === 10) return true;
+    if (digits.length === 12 && digits.startsWith("91")) return true;
+    if (digits.length === 11 && digits.startsWith("0")) return true;
+    
+    return false;
+  };
+
+  const formatMobileForApi = (value: string): string => {
+    let digits = value.replace(/\D/g, "");
+    
+    // Remove leading 0 if present
+    if (digits.startsWith("0")) {
+      digits = digits.slice(1);
+    }
+    
+    // If already has 91 prefix and is 12 digits
+    if (digits.startsWith("91") && digits.length === 12) {
+      return "+" + digits;
+    }
+    
+    // If 10 digits, add +91
+    if (digits.length === 10) {
+      return "+91" + digits;
+    }
+    
+    return value;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    if (!email) {
-      setError("Email is required");
+    if (!identifier) {
+      setError("Email or mobile number is required");
       return;
     }
 
@@ -27,9 +65,12 @@ const Login = () => {
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address");
+    // Validate identifier (must be either valid email or valid mobile)
+    const isEmail = isValidEmail(identifier);
+    const isMobile = isValidMobile(identifier);
+
+    if (!isEmail && !isMobile) {
+      setError("Please enter a valid email address or 10-digit mobile number");
       return;
     }
 
@@ -37,11 +78,21 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const { success, error: loginError } = await login(email, password);
+      // Format mobile number if it's a mobile login
+      const loginIdentifier = isMobile ? formatMobileForApi(identifier) : identifier;
+      
+      const { success, error: loginError } = await login(loginIdentifier, password);
       if (success) {
         navigate("/");
       } else {
-        setError(loginError || "Invalid credentials");
+        // Provide clear error message
+        if (loginError?.toLowerCase().includes("password")) {
+          setError("Incorrect password. Please try again.");
+        } else if (loginError?.toLowerCase().includes("user") || loginError?.toLowerCase().includes("not found")) {
+          setError(isEmail ? "No account found with this email address." : "No account found with this mobile number.");
+        } else {
+          setError(loginError || "Invalid credentials. Please check your email/phone and password.");
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred");
@@ -61,15 +112,15 @@ const Login = () => {
         <div className="bg-card rounded-2xl shadow-elegant p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="identifier">Email or Mobile Number</Label>
               <Input
-                id="email"
-                type="email"
-                name="login-email-field"
-                placeholder="Enter email address"
-                value={email}
+                id="identifier"
+                type="text"
+                name="login-identifier-field"
+                placeholder="Enter email or mobile number"
+                value={identifier}
                 onChange={(e) => {
-                  setEmail(e.target.value);
+                  setIdentifier(e.target.value);
                   setError("");
                 }}
                 className={error ? "border-destructive" : ""}

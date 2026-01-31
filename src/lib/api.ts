@@ -8,6 +8,7 @@ export interface User {
   _id: string;
   name: string;
   email: string;
+  mobile?: string;
   role: string;
   status?: string;
   isDeleted?: boolean;
@@ -65,9 +66,13 @@ export const getToken = () => {
 };
 
 // ========== AUTH ==========
-export const registerUser = async (name: string, email: string, password: string) => {
+export const registerUser = async (name: string, email: string, password: string, mobile?: string) => {
   try {
-    const res = await api.post("/auth/register", { name, email, password });
+    const payload: { name: string; email: string; password: string; mobile?: string } = { name, email, password };
+    if (mobile) {
+      payload.mobile = mobile;
+    }
+    const res = await api.post("/auth/register", payload);
     saveToken(res.data.token);
     return { data: res.data };
   } catch (err: any) {
@@ -75,9 +80,17 @@ export const registerUser = async (name: string, email: string, password: string
   }
 };
 
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (identifier: string, password: string) => {
   try {
-    const res = await api.post("/auth/login", { email, password });
+    // Determine if identifier is email or mobile number
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isEmail = emailRegex.test(identifier);
+    
+    const payload = isEmail 
+      ? { email: identifier, password } 
+      : { mobile: identifier, password };
+    
+    const res = await api.post("/auth/login", payload);
     saveToken(res.data.token);
     return { data: res.data };
   } catch (err: any) {
