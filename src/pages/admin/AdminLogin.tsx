@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Shield, Eye, EyeOff } from "lucide-react";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -16,7 +16,7 @@ const AdminLogin = () => {
   const [isReady, setIsReady] = useState(false);
   const navigate = useNavigate();
   
-  const emailRef = useRef<HTMLInputElement>(null);
+  const identifierRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
   // Remove readonly after mount to prevent autofill
@@ -27,11 +27,38 @@ const AdminLogin = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  const isValidEmail = (value: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(value);
+  };
+
+  const isValidMobile = (value: string): boolean => {
+    const digits = value.replace(/\D/g, "");
+    if (digits.length === 10) return true;
+    if (digits.length === 12 && digits.startsWith("91")) return true;
+    if (digits.length === 11 && digits.startsWith("0")) return true;
+    return false;
+  };
+
+  const formatMobileForApi = (value: string): string => {
+    let digits = value.replace(/\D/g, "");
+    if (digits.startsWith("0")) {
+      digits = digits.slice(1);
+    }
+    if (digits.startsWith("91") && digits.length === 12) {
+      return "+" + digits;
+    }
+    if (digits.length === 10) {
+      return "+91" + digits;
+    }
+    return value;
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!email) {
-      setError("Email is required");
+    if (!identifier) {
+      setError("Email or mobile number is required");
       return;
     }
 
@@ -40,9 +67,11 @@ const AdminLogin = () => {
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Please enter a valid email address");
+    const isEmail = isValidEmail(identifier);
+    const isMobile = isValidMobile(identifier);
+
+    if (!isEmail && !isMobile) {
+      setError("Please enter a valid email address or 10-digit mobile number");
       return;
     }
 
@@ -50,7 +79,8 @@ const AdminLogin = () => {
     setIsLoading(true);
 
     try {
-      const result = await loginUser(email, password);
+      const loginIdentifier = isMobile ? formatMobileForApi(identifier) : identifier;
+      const result = await loginUser(loginIdentifier, password);
       
       if (result.error) {
         setError(result.error);
@@ -87,15 +117,16 @@ const AdminLogin = () => {
         <div className="bg-card rounded-2xl shadow-elegant p-8">
           <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div className="space-y-2">
-              <Label htmlFor="admin-email">Admin Email</Label>
+              <Label htmlFor="admin-identifier">Email or Mobile Number</Label>
               <Input
-                ref={emailRef}
-                id="admin-email"
-                name="admin-email-field"
-                type="email"
-                value={email}
+                ref={identifierRef}
+                id="admin-identifier"
+                name="admin-identifier-field"
+                type="text"
+                placeholder="Enter email or mobile number"
+                value={identifier}
                 onChange={(e) => {
-                  setEmail(e.target.value);
+                  setIdentifier(e.target.value);
                   setError("");
                 }}
                 className={error ? "border-destructive" : ""}
@@ -107,8 +138,8 @@ const AdminLogin = () => {
                 data-lpignore="true"
                 readOnly={!isReady}
                 onFocus={() => {
-                  if (emailRef.current) {
-                    emailRef.current.removeAttribute("readonly");
+                  if (identifierRef.current) {
+                    identifierRef.current.removeAttribute("readonly");
                   }
                 }}
               />
@@ -122,6 +153,7 @@ const AdminLogin = () => {
                   id="admin-password"
                   name="admin-password-field"
                   type={showPassword ? "text" : "password"}
+                  placeholder="Enter password"
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
