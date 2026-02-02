@@ -5,11 +5,12 @@ import AuthHeader from "@/components/AuthHeader";
 import AuthButton from "@/components/AuthButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield } from "lucide-react";
+import { Shield, Eye, EyeOff } from "lucide-react";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("vertexly.in@gmail.com");
-  const [password, setPassword] = useState("shivapal123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -115,27 +116,37 @@ const AdminLogin = () => {
 
             <div className="space-y-2">
               <Label htmlFor="admin-password">Password</Label>
-              <Input
-                ref={passwordRef}
-                id="admin-password"
-                name="admin-password-field"
-                type="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setError("");
-                }}
-                className={error ? "border-destructive" : ""}
-                autoComplete="new-password"
-                data-form-type="other"
-                data-lpignore="true"
-                readOnly={!isReady}
-                onFocus={() => {
-                  if (passwordRef.current) {
-                    passwordRef.current.removeAttribute("readonly");
-                  }
-                }}
-              />
+              <div className="relative">
+                <Input
+                  ref={passwordRef}
+                  id="admin-password"
+                  name="admin-password-field"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError("");
+                  }}
+                  className={error ? "border-destructive pr-10" : "pr-10"}
+                  autoComplete="new-password"
+                  data-form-type="other"
+                  data-lpignore="true"
+                  readOnly={!isReady}
+                  onFocus={() => {
+                    if (passwordRef.current) {
+                      passwordRef.current.removeAttribute("readonly");
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             {error && <p className="text-sm text-destructive">{error}</p>}

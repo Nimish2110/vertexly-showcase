@@ -9,30 +9,32 @@ interface Expert {
   image: string;
 }
 
+const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%23ffffff' width='400' height='400'/%3E%3C/svg%3E";
+
 const experts: Expert[] = [
   {
     id: "1",
-    name: "Mr. Arafat",
+    name: "Gauranshi",
     role: "UX Design Expert",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format",
+    image: PLACEHOLDER_IMAGE,
   },
   {
     id: "2",
-    name: "Mr. Saiful",
+    name: "Jayanta Das",
     role: "Web Development Lead",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format",
+    image: PLACEHOLDER_IMAGE,
   },
   {
     id: "3",
-    name: "Mr. Urela",
+    name: "Nimish",
     role: "Design Strategy",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format",
+    image: PLACEHOLDER_IMAGE,
   },
   {
     id: "4",
     name: "Mr. Uttom",
     role: "Frontend Specialist",
-    image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format",
+    image: PLACEHOLDER_IMAGE,
   },
 ];
 
