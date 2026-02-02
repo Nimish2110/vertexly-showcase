@@ -11,6 +11,8 @@ interface Expert {
 
 const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect fill='%23ffffff' width='400' height='400'/%3E%3C/svg%3E";
 
+import jayantDasImage from "@/assets/jayant-das.jpeg";
+
 const experts: Expert[] = [
   {
     id: "1",
@@ -21,13 +23,13 @@ const experts: Expert[] = [
   {
     id: "2",
     name: "Jayanta Das",
-    role: "Web Development Lead",
-    image: PLACEHOLDER_IMAGE,
+    role: "Design Strategy",
+    image: jayantDasImage,
   },
   {
     id: "3",
     name: "Nimish",
-    role: "Design Strategy",
+    role: "Web Development Lead",
     image: PLACEHOLDER_IMAGE,
   },
   {
