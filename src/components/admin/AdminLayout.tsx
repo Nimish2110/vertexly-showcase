@@ -1,8 +1,9 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, ShoppingCart, Users, LogOut, ChevronRight } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Users, LogOut, ChevronRight, CreditCard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import AdminNotificationBell from "./AdminNotificationBell";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -21,6 +22,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const menuItems = [
     { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
+    { path: "/admin/payments", label: "Payments", icon: CreditCard },
     { path: "/admin/users", label: "Users", icon: Users },
   ];
 
@@ -29,7 +31,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* Sidebar */}
       <aside className="w-64 bg-card border-r border-border flex flex-col">
         <div className="p-6 border-b border-border">
-          <h1 className="text-xl font-bold text-primary">Vertexly Admin</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-primary">Vertexly Admin</h1>
+            <AdminNotificationBell />
+          </div>
           <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
         </div>
 
