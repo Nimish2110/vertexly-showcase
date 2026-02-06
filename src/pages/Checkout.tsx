@@ -239,17 +239,6 @@ const Checkout = () => {
           </div>
         )}
 
-        {/* --- PAYMENT SECTION (Coming Soon) --- */}
-        <div className="bg-card p-6 rounded-xl shadow">
-          <h3 className="text-xl font-bold mb-4">Payment</h3>
-          <p className="text-muted-foreground mb-4">
-            Payment gateway coming soon. After submitting requirements, our team will contact you.
-          </p>
-          <Button disabled className="w-full opacity-50">
-            Pay Now (Coming Soon)
-          </Button>
-        </div>
-
         <div className="mt-6 text-center">
           <Link to="/" className="text-primary hover:underline">
             ← Back to Home

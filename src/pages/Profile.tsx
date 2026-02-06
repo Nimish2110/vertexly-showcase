@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, LogOut, Home, Download, Loader2 } from "lucide-react";
+import { User, LogOut, Home, Download, Loader2, Pencil, Check, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getMyOrders, createOrder, downloadDelivery, createPayment, verifyPayment, Order } from "@/lib/api";
+import { getMyOrders, createOrder, downloadDelivery, createPayment, verifyPayment, submitRequirements, Order } from "@/lib/api";
 import { useRazorpay, RazorpayResponse } from "@/hooks/useRazorpay";
 import AuthHeader from "@/components/AuthHeader";
 import AuthButton from "@/components/AuthButton";
@@ -32,6 +32,9 @@ const Profile = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [editedRequirements, setEditedRequirements] = useState("");
+  const [isSavingRequirements, setIsSavingRequirements] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
@@ -183,6 +186,36 @@ const Profile = () => {
     return developerStatus === "accepted" && paymentStatus !== "paid";
   };
 
+  const handleEditRequirements = (order: Order) => {
+    setEditingOrderId(order._id);
+    setEditedRequirements(order.requirements || "");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingOrderId(null);
+    setEditedRequirements("");
+  };
+
+  const handleSaveRequirements = async (orderId: string) => {
+    if (!editedRequirements.trim()) {
+      toast.error("Requirements cannot be empty");
+      return;
+    }
+
+    setIsSavingRequirements(true);
+    const { data, error } = await submitRequirements(orderId, editedRequirements);
+    
+    if (data && !error) {
+      toast.success("Requirements updated!");
+      setEditingOrderId(null);
+      setEditedRequirements("");
+      await fetchOrders();
+    } else {
+      toast.error(error || "Failed to update requirements");
+    }
+    setIsSavingRequirements(false);
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -307,8 +340,49 @@ const Profile = () => {
                       <td className="py-4 px-4 text-foreground">
                         ₹{price.toLocaleString()}
                       </td>
-                      <td className="py-4 px-4 text-muted-foreground text-sm max-w-[200px] truncate">
-                        {requirements || "Not submitted"}
+                      <td className="py-4 px-4 text-muted-foreground text-sm max-w-[250px]">
+                        {editingOrderId === orderId ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={editedRequirements}
+                              onChange={(e) => setEditedRequirements(e.target.value)}
+                              className="flex-1 px-2 py-1 text-sm border border-border rounded bg-background text-foreground"
+                              disabled={isSavingRequirements}
+                            />
+                            <button
+                              onClick={() => handleSaveRequirements(orderId)}
+                              disabled={isSavingRequirements}
+                              className="p-1 text-green-600 hover:bg-green-100 rounded"
+                            >
+                              {isSavingRequirements ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Check className="w-4 h-4" />
+                              )}
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              disabled={isSavingRequirements}
+                              className="p-1 text-destructive hover:bg-destructive/10 rounded"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="truncate">{requirements || "Not submitted"}</span>
+                            {requirements && (
+                              <button
+                                onClick={() => handleEditRequirements(order)}
+                                className="p-1 text-muted-foreground hover:text-primary hover:bg-muted rounded flex-shrink-0"
+                                title="Edit requirements"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="py-4 px-4 text-muted-foreground">
                         {createdAt}
