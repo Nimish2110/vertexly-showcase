@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminNotifications } from "@/contexts/AdminNotificationContext";
 import { createOrder, submitRequirements } from "@/lib/api";
 import { templates as templatesData } from "@/data/templates";
 
@@ -36,6 +37,7 @@ const Checkout = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const { toast } = useToast();
   const { isLoggedIn } = useAuth();
+  const { addNotification } = useAdminNotifications();
   const navigate = useNavigate();
 
   const [discountCode, setDiscountCode] = useState("");
@@ -127,6 +129,15 @@ const Checkout = () => {
 
     if (data) {
       setRequirementsSubmitted(true);
+      
+      // Trigger admin notification for requirements submission
+      addNotification({
+        type: "requirements_update",
+        message: `User submitted requirements for ${template.title}`,
+        templateName: template.title,
+        orderId: orderId,
+      });
+      
       toast({
         title: "Requirements Submitted",
         description: "Your requirements were saved!",

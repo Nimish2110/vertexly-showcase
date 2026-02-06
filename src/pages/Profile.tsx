@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { User, LogOut, Home, Download, Loader2, Pencil, Check, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminNotifications } from "@/contexts/AdminNotificationContext";
 import { getMyOrders, createOrder, downloadDelivery, createPayment, verifyPayment, submitRequirements, Order } from "@/lib/api";
 import { useRazorpay, RazorpayResponse } from "@/hooks/useRazorpay";
 import AuthHeader from "@/components/AuthHeader";
@@ -22,6 +23,7 @@ import { toast } from "sonner";
 const Profile = () => {
   const navigate = useNavigate();
   const { user, logout, isLoggedIn, isLoading: authLoading } = useAuth();
+  const { addNotification } = useAdminNotifications();
   const { openRazorpay } = useRazorpay();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -165,6 +167,15 @@ const Profile = () => {
           toast.error(verifyResult.error);
         } else {
           toast.success("Payment successful!");
+          
+          // Trigger admin notification for payment received
+          addNotification({
+            type: "payment_received",
+            message: `Payment received for ${order.templateName || "order"}`,
+            templateName: order.templateName || "Unknown Template",
+            orderId: orderId,
+          });
+          
           // Refresh orders to update payment status
           await fetchOrders();
         }
@@ -207,6 +218,18 @@ const Profile = () => {
     
     if (data && !error) {
       toast.success("Requirements updated!");
+      
+      // Find the order to get template name for notification
+      const order = orders.find((o) => o._id === orderId);
+      if (order) {
+        addNotification({
+          type: "requirements_update",
+          message: `User updated requirements for ${order.templateName || "order"}`,
+          templateName: order.templateName || "Unknown Template",
+          orderId: orderId,
+        });
+      }
+      
       setEditingOrderId(null);
       setEditedRequirements("");
       await fetchOrders();
