@@ -100,7 +100,9 @@ export const loginUser = async (identifier: string, password: string) => {
 export const getUserProfile = async () => {
   try {
     const res = await api.get("/users/profile");
-    return { data: res.data };
+    // Normalize: backend may return { user: {...} } or the user object directly
+    const userData = res.data?.user || res.data;
+    return { data: userData as User };
   } catch (err: any) {
     return { error: err.response?.data?.message || "Failed to load profile" };
   }
