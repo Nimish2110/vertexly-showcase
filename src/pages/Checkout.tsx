@@ -36,7 +36,7 @@ const templates: Record<string, Template> = templatesData.reduce((acc, t) => {
 const Checkout = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const { toast } = useToast();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const { addNotification } = useAdminNotifications();
   const navigate = useNavigate();
 
@@ -133,7 +133,8 @@ const Checkout = () => {
       // Trigger admin notification for requirements submission
       addNotification({
         type: "requirements_update",
-        message: `User submitted requirements for ${template.title}`,
+        message: `${user?.name || "A user"} submitted requirements for ${template.title}`,
+        userName: user?.name || "Unknown User",
         templateName: template.title,
         orderId: orderId,
       });

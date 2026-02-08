@@ -4,6 +4,7 @@ export interface AdminNotification {
   id: string;
   type: "requirements_update" | "payment_received";
   message: string;
+  userName: string;
   templateName: string;
   orderId: string;
   timestamp: Date;
