@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminNotifications } from "@/contexts/AdminNotificationContext";
 import { createOrder, submitRequirements } from "@/lib/api";
 import { templates as templatesData } from "@/data/templates";
+import { validateCoupon, markCouponUsed, getCouponDiscount } from "@/lib/coupon";
 
 interface Template {
   id: string;
@@ -41,6 +42,8 @@ const Checkout = () => {
   const navigate = useNavigate();
 
   const [discountCode, setDiscountCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [couponError, setCouponError] = useState("");
   const [showRequirements, setShowRequirements] = useState(false);
   const [requirements, setRequirements] = useState("");
   const [requirementsSubmitted, setRequirementsSubmitted] = useState(false);
@@ -58,8 +61,22 @@ const Checkout = () => {
   }
 
   const customizationCharges = 500;
-  const discount = discountCode.toLowerCase() === "welcome10" ? template.price * 0.1 : 0;
+  const couponDiscountAmount = couponApplied ? (template.price + customizationCharges) * getCouponDiscount() : 0;
+  const discount = couponDiscountAmount;
   const totalAmount = template.price + customizationCharges - discount;
+
+  const handleApplyCoupon = () => {
+    if (!discountCode.trim()) return;
+    const result = validateCoupon(discountCode, user?._id);
+    if (result.valid) {
+      setCouponApplied(true);
+      setCouponError("");
+      toast({ title: "Coupon Applied!", description: "70% discount applied to your order." });
+    } else {
+      setCouponApplied(false);
+      setCouponError(result.error || "Invalid coupon");
+    }
+  };
 
   // =============================
   // CREATE ORDER
@@ -129,6 +146,11 @@ const Checkout = () => {
 
     if (data) {
       setRequirementsSubmitted(true);
+
+      // Mark coupon as used for this user
+      if (couponApplied) {
+        markCouponUsed(user?._id);
+      }
       
       // Trigger admin notification for requirements submission
       addNotification({
@@ -183,12 +205,39 @@ const Checkout = () => {
 
             <div>
               <Label>Discount Code</Label>
-              <Input
-                value={discountCode}
-                onChange={(e) => setDiscountCode(e.target.value)}
-                placeholder="Enter code"
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={discountCode}
+                  onChange={(e) => {
+                    setDiscountCode(e.target.value);
+                    setCouponApplied(false);
+                    setCouponError("");
+                  }}
+                  placeholder="Enter coupon code"
+                  disabled={couponApplied}
+                />
+                <Button
+                  variant="outline"
+                  onClick={handleApplyCoupon}
+                  disabled={couponApplied || !discountCode.trim()}
+                  className="shrink-0"
+                >
+                  <Tag className="w-4 h-4 mr-1" />
+                  {couponApplied ? "Applied" : "Apply"}
+                </Button>
+              </div>
+              {couponError && <p className="text-destructive text-sm mt-1">{couponError}</p>}
+              {couponApplied && (
+                <p className="text-sm mt-1" style={{ color: "hsl(142, 71%, 45%)" }}>70% discount applied! You save ₹{couponDiscountAmount.toFixed(0)}</p>
+              )}
             </div>
+
+            {couponApplied && (
+              <div className="flex justify-between text-sm">
+                <span>Coupon Discount (70%)</span>
+                <span className="text-destructive">-₹{couponDiscountAmount.toFixed(0)}</span>
+              </div>
+            )}
 
             <div className="flex justify-between border-t pt-3 font-bold text-lg">
               <span>Total</span>

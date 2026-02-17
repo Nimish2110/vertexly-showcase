@@ -2,6 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import CouponPopup from "@/components/CouponPopup";
+import { useAuth } from "@/contexts/AuthContext";
+import { isCouponUsed } from "@/lib/coupon";
 import { Puzzle, Filter, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import TemplateCard from "@/components/TemplateCard";
@@ -28,6 +31,15 @@ const Templates = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get("category") || "All";
   const [selectedFilter, setSelectedFilter] = useState(initialCategory);
+  const [showCouponPopup, setShowCouponPopup] = useState(false);
+  const { user } = useAuth();
+
+  // Show coupon popup if not used yet
+  useEffect(() => {
+    if (!isCouponUsed(user?._id)) {
+      setShowCouponPopup(true);
+    }
+  }, [user?._id]);
 
   // Update filter when URL param changes
   useEffect(() => {
@@ -58,6 +70,7 @@ const Templates = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      {showCouponPopup && <CouponPopup onClose={() => setShowCouponPopup(false)} />}
 
       {/* Page Header */}
       <section className="gradient-primary pt-32 pb-20 px-4">
