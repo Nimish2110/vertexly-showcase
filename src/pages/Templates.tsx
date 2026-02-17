@@ -21,6 +21,7 @@ const filterOptions = [
   { label: "E-commerce Templates", value: "E-commerce" },
   { label: "Landing Pages", value: "Landing" },
   { label: "Blog Templates", value: "Blog" },
+  { label: "Automotive Templates", value: "Automotive" },
 ];
 
 const Templates = () => {
