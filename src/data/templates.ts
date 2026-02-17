@@ -456,4 +456,16 @@ export const templates: Template[] = [
     previewUrl: "/templates/Jonson Master/index.html",
     downloadUrl: "",
   },
+  {
+    id: "volvo-luxury",
+    image: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500&auto=format",
+    category: "Automotive",
+    title: "Volvo Luxury",
+    description: "Premium luxury automotive template with elegant car showcases, dealership features, and sophisticated design for high-end vehicle brands.",
+    rating: 4.9,
+    reviews: 245,
+    price: 2500,
+    previewUrl: "/templates/Volvo Luxury/volvo-luxury-web template.html",
+    downloadUrl: "",
+  },
 ];
