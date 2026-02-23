@@ -155,8 +155,8 @@ const Checkout = () => {
       // Trigger admin notification for requirements submission
       addNotification({
         type: "requirements_update",
-        message: `${user!.name} submitted requirements for ${template.title}`,
-        userName: user!.name,
+        message: `${user?.name || "A customer"} submitted requirements for ${template.title}`,
+        userName: user?.name || "Unknown",
         templateName: template.title,
         orderId: orderId,
       });
