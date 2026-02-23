@@ -58,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const token = getToken();
       if (token) {
         const { data, error } = await getUserProfile();
+        console.log("[AUTH] getUserProfile response →", JSON.stringify(data), "error →", error);
         if (data && !error) {
           setUser(data);
           saveUserToStorage(data);
@@ -77,7 +78,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (identifier: string, password: string): Promise<{ success: boolean; error?: string }> => {
     const { data, error } = await loginUser(identifier, password);
+    console.log("[AUTH] loginUser response →", JSON.stringify(data));
     if (data && !error) {
+      console.log("[AUTH] user object from login →", JSON.stringify(data.user));
       setUser(data.user);
       saveUserToStorage(data.user);
       setIsLoggedIn(true);
