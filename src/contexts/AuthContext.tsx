@@ -57,11 +57,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initAuth = async () => {
       const token = getToken();
       if (token) {
-        const { data, error } = await getUserProfile();
-        console.log("[AUTH] getUserProfile response →", JSON.stringify(data), "error →", error);
+        const { data, error, partial } = await getUserProfile();
+        console.log("[AUTH] getUserProfile →", JSON.stringify(data), "partial:", partial, "error:", error);
         if (data && !error) {
-          setUser(data);
-          saveUserToStorage(data);
+          if (partial && cachedUser?.name) {
+            // Backend returned incomplete data (e.g. JWT payload without name).
+            // Merge: keep cached name/email but update role/_id from backend.
+            const merged = { ...cachedUser, ...data, name: cachedUser.name, email: cachedUser.email || data.email };
+            setUser(merged);
+            saveUserToStorage(merged);
+          } else {
+            setUser(data);
+            saveUserToStorage(data);
+          }
           setIsLoggedIn(true);
         } else {
           // Token invalid - clear everything
@@ -78,9 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (identifier: string, password: string): Promise<{ success: boolean; error?: string }> => {
     const { data, error } = await loginUser(identifier, password);
-    console.log("[AUTH] loginUser response →", JSON.stringify(data));
     if (data && !error) {
-      console.log("[AUTH] user object from login →", JSON.stringify(data.user));
       setUser(data.user);
       saveUserToStorage(data.user);
       setIsLoggedIn(true);
@@ -112,10 +118,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshUser = async () => {
-    const { data } = await getUserProfile();
+    const { data, partial } = await getUserProfile();
     if (data) {
-      setUser(data);
-      saveUserToStorage(data);
+      if (partial && user?.name) {
+        const merged = { ...user, ...data, name: user.name, email: user.email || data.email };
+        setUser(merged);
+        saveUserToStorage(merged);
+      } else if (!partial) {
+        setUser(data);
+        saveUserToStorage(data);
+      }
     }
   };
 

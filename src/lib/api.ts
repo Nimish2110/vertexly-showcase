@@ -97,11 +97,24 @@ export const loginUser = async (identifier: string, password: string) => {
 };
 
 // ========== USER ==========
-export const getUserProfile = async () => {
+export const getUserProfile = async (): Promise<{ data?: User; error?: string; partial?: boolean }> => {
   try {
     const res = await api.get("/users/profile");
     // Normalize: backend may return { user: {...} } or the user object directly
     const userData = res.data?.user || res.data;
+    
+    // Normalize _id field (backend sometimes returns 'id' instead of '_id')
+    if (userData.id && !userData._id) {
+      userData._id = userData.id;
+    }
+    
+    // Backend sometimes returns decoded JWT ({id, role, iat, exp}) instead of full user doc.
+    // Detect this by checking for 'name' field.
+    if (!userData.name) {
+      console.warn("[API] getUserProfile returned data without 'name':", JSON.stringify(userData));
+      return { data: userData as User, partial: true };
+    }
+    
     return { data: userData as User };
   } catch (err: any) {
     return { error: err.response?.data?.message || "Failed to load profile" };

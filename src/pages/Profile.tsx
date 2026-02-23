@@ -171,8 +171,8 @@ const Profile = () => {
           // Trigger admin notification for payment received
           addNotification({
             type: "payment_received",
-            message: `${user!.name} completed payment for ${order.templateName || "order"}`,
-            userName: user!.name,
+            message: `${user?.name || "A customer"} completed payment for ${order.templateName || "order"}`,
+            userName: user?.name || "Unknown",
             templateName: order.templateName || "Unknown Template",
             orderId: orderId,
           });
@@ -225,8 +225,8 @@ const Profile = () => {
       if (order) {
         addNotification({
           type: "requirements_update",
-           message: `${user!.name} updated requirements for ${order.templateName || "order"}`,
-           userName: user!.name,
+          message: `${user?.name || "A customer"} updated requirements for ${order.templateName || "order"}`,
+          userName: user?.name || "Unknown",
           templateName: order.templateName || "Unknown Template",
           orderId: orderId,
         });
