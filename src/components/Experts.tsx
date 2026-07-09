@@ -34,8 +34,8 @@ const experts: Expert[] = [
   },
   {
     id: "4",
-    name: "Mr. Uttom",
-    role: "Frontend Specialist",
+    name: "Ms. Vidya Bag",
+    role: "Web Development Lead",
     image: PLACEHOLDER_IMAGE,
   },
 ];
